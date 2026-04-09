@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOKYO J-PLANNER 2026 DESIGNER EDITION</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap');
+
+        :root {
+            /* 奶油和紙底色 */
+            --color-bg: #F7F6F2; 
+            --color-slate: #0F172A; 
+            --color-teal: #0D9488;  
+            --color-teal-dark: #0F766E; 
+            --color-yellow: #FDE047;
+            --color-red: #DC2626;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-slate);
+            overscroll-behavior: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .font-serif { font-family: 'Noto Serif TC', serif; }
+        * { font-style: normal !important; }
+
+        /* =========================================
+           EX 1: 天數導航 (字體放大)
+           ========================================= */
+        .day-nav-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center; 
+            padding: 12px 16px 0 16px;
+            background-color: white;
+            border-bottom: 2px solid var(--color-teal-dark);
+        }
+        .day-tab {
+            background-color: var(--color-teal); 
+            color: rgba(255,255,255,0.8);
+            border-radius: 12px 12px 0 0;
+            padding: 10px 14px;
+            min-width: 68px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 2px;
+            transition: all 0.2s ease;
+        }
+        .day-tab-active {
+            background-color: var(--color-teal-dark); 
+            color: white;
+            padding: 12px 16px 10px 16px;
+        }
+        .day-tab-title { 
+            font-size: 22px; /* 放大 */
+            font-weight: 900; 
+            line-height: 1.1; 
+            border-bottom: 2px solid transparent;
+            padding-bottom: 2px;
+        }
+        .day-tab-active .day-tab-title {
+            border-bottom: 2px solid white;
+        }
+        .day-tab-sub { 
+            font-size: 12px; /* 放大 */
+            font-weight: 700; 
+            margin-top: 4px;
+        }
+
+        /* =========================================
+           EX 2: 區域推薦 (字體放大)
+           ========================================= */
+        .area-pill-ex2 {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 16px; /* 增加點擊範圍 */
+            border-radius: 9999px; 
+            background-color: #FFFFFF;
+            border: 1.5px solid #0D9488;
+            color: #0F766E;
+            font-size: 13px; /* 放大 */
+            font-weight: 900;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            white-space: nowrap;
+        }
+
+        /* =========================================
+           網格排版 (微調間距以適應大字)
+           ========================================= */
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: 56px 24px 1fr; /* 留給時間更多空間 */
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .timeline-time {
+            text-align: right;
+            font-size: 17px; /* 放大 */
+            font-weight: 900;
+            color: #475569;
+            padding-top: 4px;
+            letter-spacing: -0.5px;
+        }
+        .timeline-spine-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        .timeline-spine-line {
+            position: absolute;
+            top: 16px;
+            bottom: -32px;
+            width: 2px;
+            background-image: repeating-linear-gradient(to bottom, #CBD5E1 0, #CBD5E1 6px, transparent 6px, transparent 12px);
+        }
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            background-color: #0F172A;
+            border: 4px solid white;
+            border-radius: 50%;
+            position: relative;
+            z-index: 10;
+            margin-top: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .travel-row {
+            display: grid;
+            grid-template-columns: 56px 24px 1fr;
+            gap: 10px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+        .timeline-dot-travel {
+            width: 12px;
+            height: 12px;
+            background-color: white;
+            border: 2px solid #94A3B8;
+            border-radius: 50%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 120px); }
+        .tab-active { color: var(--color-teal-dark); font-weight: 900; }
+    </style>
+</head>
+<body class="safe-bottom">
+
+    <!-- Top Navigation (EX1) -->
+    <nav class="sticky top-0 z-50 shadow-sm">
+        <div class="day-nav-container no-scrollbar" id="day-selector">
+            <!-- JS Injected D1-D6 -->
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="app-container" class="p-4 max-w-md mx-auto">
+        
+        <!-- 1. 行程分頁 -->
+        <section id="view-itinerary" class="animate-fade-in">
+            <!-- 每日大標 -->
+            <div id="day-header-block" class="mb-8 bg-teal-800 rounded-[2rem] shadow-xl text-white relative overflow-hidden flex flex-col justify-end min-h-[180px] p-6">
+                <!-- 動態背景圖層 -->
+                <div id="day-bg-image" class="absolute inset-0 w-full h-full bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-teal-900 via-teal-900/70 to-transparent"></div>
+                
+                <div class="relative z-10">
+                    <h2 id="day-theme" class="text-4xl font-black text-white font-serif tracking-tight mb-3">載入中...</h2>
+                    <div class="flex items-center gap-2 text-sm font-bold text-teal-100 mb-3">
+                        <i data-lucide="calendar" class="w-4 h-4 text-yellow-400"></i>
+                        <span id="day-date">YYYY.MM.DD</span>
+                        <span class="mx-1">|</span>
+                        <span id="day-weather">讀取中</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Timeline -->
+            <div id="itinerary-timeline" class="pt-2">
+                <!-- JS Injected Rows -->
+            </div>
+
+            <!-- Bottom Note -->
+            <div class="mt-8 space-y-6">
+                <div class="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
+                    <div class="flex items-center gap-2 mb-4 text-slate-800 font-black text-base">
+                        <i data-lucide="shirt" class="w-6 h-6 text-teal-700"></i> 本日穿搭詳解
+                    </div>
+                    <p id="outfit-detail" class="text-base text-slate-600 font-bold leading-relaxed mb-3"></p>
+                    <p class="text-base text-teal-700 font-black border-t border-slate-100 pt-3 mt-3">※ 鞋款：HOKA Bondi 9 黑</p>
+                </div>
+
+                <div class="bg-[#111827] text-white p-6 rounded-3xl shadow-xl">
+                    <div class="flex items-center gap-2 mb-4 text-yellow-400 font-black text-base">
+                        <i data-lucide="info" class="w-6 h-6"></i> 每日專屬策略 (J-Type Strategy)
+                    </div>
+                    <p id="strategy-note" class="text-base text-slate-200 font-bold leading-relaxed"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 美食購物分頁 -->
+        <section id="view-foodshop" class="hidden animate-fade-in space-y-6">
+            <h2 class="text-3xl font-black border-l-8 border-teal-800 pl-4 font-serif text-slate-900">美食購物推薦</h2>
+            <div class="bg-teal-50 p-5 rounded-2xl text-base font-bold text-teal-800 border border-teal-100 flex items-start gap-3">
+                <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-0.5"></i> 點擊右側的 ＋ 號，一鍵加入您的個人採購清單！
+            </div>
+            <div id="foodshop-list" class="space-y-6"></div>
+        </section>
+
+        <!-- 3. 清單分頁 -->
+        <section id="view-shopping" class="hidden animate-fade-in">
+            <h2 class="text-3xl font-black mb-6 border-l-8 border-teal-800 pl-4 font-serif text-slate-900">採購清單</h2>
+            <div class="bg-white border border-slate-200 p-6 rounded-[2rem] mb-8 shadow-sm">
+                <input type="text" id="shop-name" placeholder="輸入商品名稱..." class="w-full bg-slate-50 border border-slate-200 p-5 rounded-2xl text-slate-900 mb-4 outline-none focus:border-teal-600 font-bold text-base">
+                <div class="flex gap-3">
+                    <input type="text" id="shop-note" placeholder="備註/數量" class="flex-1 bg-slate-50 border border-slate-200 p-5 rounded-2xl text-slate-900 outline-none font-bold text-base">
+                    <button onclick="addShopItem()" class="bg-teal-800 text-white px-8 py-5 rounded-2xl font-black shadow-md active:scale-95 transition-all text-base">新增</button>
+                </div>
+            </div>
+            <div id="current-shopping-list" class="space-y-4"></div>
+        </section>
+
+        <!-- 4. 戰略核心 (EX3) -->
+        <section id="view-strategy" class="hidden animate-fade-in pb-10">
+            <div class="flex items-center gap-3 mb-8 border-l-8 border-teal-800 pl-4">
+                <h2 class="text-3xl font-black font-serif text-slate-900 tracking-tight">戰略核心 Memo</h2>
+            </div>
+            
+            <div class="bg-[#111827] p-8 rounded-[2.5rem] shadow-2xl space-y-8">
+                
+                <!-- 色塊分區 1: 預約 (深藏青) -->
+                <div class="bg-slate-800 p-6 rounded-[2rem] border border-slate-700">
+                    <h3 class="text-xl font-black text-white mb-5 flex items-center gap-2 border-b border-white/10 pb-4">
+                        <i data-lucide="bookmark" class="text-yellow-400 w-6 h-6"></i> 餐廳預約區
+                    </h3>
+                    <div class="space-y-4">
+                        <a href="https://www.bouya.jp/shop/ueno6/" target="_blank" class="flex items-center justify-between bg-white/5 p-5 rounded-2xl hover:bg-teal-900/50 transition-all">
+                            <span class="font-bold text-slate-200 text-base">一頭牛燒肉 房家 (上野)</span>
+                            <i data-lucide="external-link" class="w-5 h-5 text-teal-400"></i>
+                        </a>
+                        <a href="https://www.asakusaimahan.co.jp/" target="_blank" class="flex items-center justify-between bg-white/5 p-5 rounded-2xl hover:bg-teal-900/50 transition-all">
+                            <span class="font-bold text-slate-200 text-base">淺草今半 (國際通本店)</span>
+                            <i data-lucide="external-link" class="w-5 h-5 text-teal-400"></i>
+                        </a>
+                        <a href="https://www.jojoen.co.jp/shop/jojoen/shibuya315/" target="_blank" class="flex items-center justify-between bg-white/5 p-5 rounded-2xl hover:bg-teal-900/50 transition-all">
+                            <span class="font-bold text-slate-200 text-base">敘敘苑 (澀谷 315店)</span>
+                            <i data-lucide="external-link" class="w-5 h-5 text-teal-400"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 色塊分區 2: 地鐵 (深孔雀綠) -->
+                <div class="bg-teal-900/60 p-6 rounded-[2rem] border border-teal-700/50">
+                    <h3 class="text-xl font-black text-white mb-5 flex items-center gap-2 border-b border-teal-700/50 pb-4">
+                        <i data-lucide="subway" class="text-teal-200 w-6 h-6"></i> 地鐵套票區
+                    </h3>
+                    <div>
+                        <p class="text-xl font-black leading-loose text-white">
+                            <span class="text-teal-200">開通：</span>Day 2 <span class="text-yellow-400 bg-black/30 px-2 py-1 rounded">08:30</span> (淺草入站)<br/>
+                            <span class="text-teal-200">結束：</span>Day 5 <span class="text-red-400 bg-black/30 px-2 py-1 rounded">08:30</span> 效期截止
+                        </p>
+                        <div class="mt-5 bg-[#DC2626] p-4 rounded-xl shadow-md border border-red-400">
+                            <p class="text-base font-black text-white text-center tracking-wide">
+                                ※ 逾期後請直接感應手機 Suica 進出站
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 色塊分區 3: 提醒 (暗酒紅) -->
+                <div class="bg-red-900/40 p-6 rounded-[2rem] border border-red-800/50">
+                    <h3 class="text-xl font-black text-red-100 mb-5 flex items-center gap-2 border-b border-red-800/50 pb-4">
+                        <i data-lucide="bell-ring" class="text-red-400 w-6 h-6"></i> 搶票與提醒
+                    </h3>
+                    <p class="text-base font-bold text-white leading-relaxed mb-5">
+                        SHIBUYA SKY 夜景：<br/>
+                        請務必設定鬧鐘於 <span class="text-yellow-400 font-black text-lg bg-black/30 px-2 py-1 rounded">4/25 23:00</span> (台時) 搶購 5/9 21:00 的入場門票。
+                    </p>
+                    <p class="text-base font-bold text-white leading-relaxed">
+                        精品退稅：<br/>
+                        必須隨身攜帶 <span class="text-yellow-400 font-black">護照正本</span>。
+                    </p>
+                </div>
+
+                <!-- 色塊分區 4: 航班 (深靛藍) -->
+                <div class="bg-blue-900/40 p-6 rounded-[2rem] border border-blue-800/50">
+                    <h3 class="text-xl font-black text-blue-100 mb-5 flex items-center gap-2 border-b border-blue-800/50 pb-4">
+                        <i data-lucide="plane-takeoff" class="text-blue-400 w-6 h-6"></i> 航班時刻表
+                    </h3>
+                    <div class="space-y-5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-blue-200 font-bold text-base">去程 5/7 CI 126</span>
+                            <span class="font-black text-white text-lg">13:40 ➔ 17:35 NRT</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-blue-200 font-bold text-base">回程 5/12 CI 103</span>
+                            <span class="font-black text-white text-lg">13:35 ➔ 16:20 TPE</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 5. 工具分頁 -->
+        <section id="view-tools" class="hidden animate-fade-in space-y-6">
+            <h2 class="text-3xl font-black border-l-8 border-teal-800 pl-4 font-serif text-slate-900">隨身工具箱</h2>
+            
+            <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
+                <h3 class="font-black text-blue-600 mb-4 flex items-center gap-2 text-xl"><i data-lucide="languages" class="w-7 h-7"></i> Google 翻譯</h3>
+                <p class="text-sm text-slate-500 font-bold mb-5">即時對話與菜單拍照翻譯</p>
+                <a href="https://translate.google.com/m?sl=ja&tl=zh-TW" target="_blank" class="block w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-center shadow-md active:scale-95 transition-all text-lg">
+                    開啟手機版翻譯
+                </a>
+            </div>
+
+            <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
+                <h3 class="font-black text-slate-800 mb-5 flex items-center gap-2 text-xl"><i data-lucide="calculator" class="w-7 h-7"></i> 匯率試算 JPY/TWD</h3>
+                <div class="flex items-center gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <input type="number" id="jpy-input" value="1000" class="w-full text-3xl font-black bg-transparent outline-none text-slate-900" oninput="conv()">
+                    <i data-lucide="arrow-right" class="text-slate-400 w-6 h-6"></i>
+                    <div id="twd-output" class="w-full text-3xl font-black text-teal-700 text-right">215</div>
+                </div>
+            </div>
+            
+            <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
+                <h3 class="font-black text-slate-800 mb-5 flex items-center gap-2 text-xl"><i data-lucide="users" class="w-7 h-7"></i> AA 結算計帳</h3>
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-5">
+                    <div class="flex gap-3 mb-4">
+                        <input type="text" id="aa-item-name" placeholder="輸入項目" class="flex-1 p-4 rounded-xl border border-slate-300 text-base font-bold outline-none">
+                        <input type="number" id="aa-item-price" placeholder="¥金額" class="w-32 p-4 rounded-xl border border-slate-300 text-base font-mono font-bold outline-none">
+                    </div>
+                    <div class="flex items-center gap-6 text-base font-black mt-3">
+                        <span class="text-slate-500">支付者：</span>
+                        <label class="flex items-center gap-2 cursor-pointer text-teal-800">
+                            <input type="radio" name="aa-payer" value="TASS" checked class="w-6 h-6 accent-teal-800"> TASS
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-orange-600">
+                            <input type="radio" name="aa-payer" value="川" class="w-6 h-6 accent-teal-800"> 川
+                        </label>
+                    </div>
+                </div>
+                <button onclick="addAAExpense()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-lg active:scale-95 transition-all mb-8 text-lg">新增紀錄</button>
+
+                <div id="aa-list" class="space-y-3 mb-8 max-h-64 overflow-y-auto no-scrollbar"></div>
+
+                <div class="bg-teal-800 text-white p-8 rounded-[2rem] text-center shadow-md">
+                    <div id="aa-summary" class="text-sm font-bold opacity-80 mb-2 tracking-widest">統計結果</div>
+                    <div id="aa-final-result" class="text-4xl font-black tracking-tighter mb-4">總支出 ¥ 0</div>
+                    <div id="aa-who-owes" class="text-base text-yellow-300 font-black p-4 bg-white/10 rounded-xl border border-white/20">✅ 目前帳目完美平衡</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation (字體與 Icon 放大) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center p-3 pb-8 z-50 shadow-[0_-10px_35px_rgba(0,0,0,0.03)]">
+        <button onclick="changeView('itinerary')" id="nav-itinerary" class="flex flex-col items-center gap-1 tab-active">
+            <i data-lucide="map-pin" class="w-6 h-6"></i><span class="text-[12px] font-black">行程</span>
+        </button>
+        <button onclick="changeView('foodshop')" id="nav-foodshop" class="flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="utensils" class="w-6 h-6"></i><span class="text-[12px] font-black">推薦</span>
+        </button>
+        <button onclick="changeView('shopping')" id="nav-shopping" class="flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="check-square" class="w-6 h-6"></i><span class="text-[12px] font-black">清單</span>
+        </button>
+        <button onclick="changeView('strategy')" id="nav-strategy" class="flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="zap" class="w-6 h-6"></i><span class="text-[12px] font-black">戰略</span>
+        </button>
+        <button onclick="changeView('tools')" id="nav-tools" class="flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[12px] font-black">工具</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- COMPLETE 6-DAY DATA ---
+        const travelData = {
+            D1: {
+                date: "05.07", theme: "上野著陸 ‧ 寧靜探路", weather: "15°C - 22°C | 晴時多雲",
+                outfit: "薄長袖襯衫 + 針織外套。5 月晚間微涼。",
+                strategy: "抵達首晚建議先在阿美橫丁勘查運動用品店位址，保持體力準備明日採購。",
+                img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800",
+                items: [
+                    { type: "stop", time: "17:35", act: "抵達成田機場 T2", desc: "提領行李，辦理入境。", highlight: false, areaRecs: ["呼吸巧克力", "LeTao 餅乾"], transSteps: ["大廳搭手扶梯上 2F", "前往京成機場站", "領取 Skyliner 車票"], ticket: "實體票" },
+                    { type: "travel", time: "18:30", act: "離開京成上野站", duration: "10 mins", dest: "相鐵飯店" },
+                    { type: "stop", time: "19:00", act: "相鐵 FRESA INN 入住", desc: "辦理入住、放置行李。", highlight: true, areaRecs: ["多慶屋", "上野廣小路"], transSteps: ["京成正面出口往中央通直行", "A4 出口對面抵達飯店"], ticket: "步行" },
+                    { type: "travel", time: "20:00", act: "離開飯店", duration: "5 mins", dest: "一頭牛燒肉 房家" },
+                    { type: "stop", time: "20:30", act: "一頭牛燒肉 房家", desc: "和牛燒肉高蛋白補給。", highlight: true, reserved: true, areaRecs: ["和牛拼盤", "盛岡冷麵"], transSteps: ["步行前往六丁目巷內"], ticket: "步行" }
+                ]
+            },
+            D2: {
+                date: "05.08", theme: "淺草晴空 ‧ 阿美橫丁", weather: "14°C - 23°C | 晴朗",
+                outfit: "短袖內搭 + 休閒襯衫。",
+                strategy: "地鐵套票正式啟用。今日完成藥妝重頭戲採買。",
+                img: "https://images.unsplash.com/photo-1533050487297-09b45013190a?auto=format&fit=crop&q=80&w=800",
+                items: [
+                    { type: "stop", time: "08:30", act: "抵達雷門 (淺草寺)", desc: "地鐵票正式開通，仲見世通散策。", highlight: true, areaRecs: ["吉備糰子", "三社祭"], transSteps: ["搭乘地鐵銀座線", "淺草站 1 號出口"], ticket: "72H地鐵券" },
+                    { type: "travel", time: "11:00", act: "離開淺草寺", duration: "10 mins", dest: "淺草今半" },
+                    { type: "stop", time: "11:30", act: "淺草今半 (本店)", desc: "高品質和牛壽喜燒定食。", highlight: true, reserved: true, areaRecs: ["午餐定食", "牛肉包"], transSteps: ["步行至國際通大馬路"], ticket: "步行" },
+                    { type: "travel", time: "13:00", act: "離開今半", duration: "15 mins", dest: "東京晴空塔" },
+                    { type: "stop", time: "13:30", act: "東京晴空塔", desc: "Solamachi 3F 勘查運動專櫃。", highlight: false, areaRecs: ["敘敘苑醬汁", "運動品牌"], transSteps: ["搭乘地鐵淺草線", "押上站下車直連商場"], ticket: "72H地鐵券" },
+                    { type: "travel", time: "16:00", act: "離開晴空塔", duration: "25 mins", dest: "阿美橫丁" },
+                    { type: "stop", time: "16:30", act: "阿美橫丁 (OS Drug)", desc: "買齊軟骨素、合利他命等藥品。", highlight: true, areaRecs: ["軟骨素 ZS", "合利他命"], transSteps: ["搭乘地鐵銀座線", "上野廣小路站下車"], ticket: "72H地鐵券" },
+                    { type: "travel", time: "18:45", act: "離開阿美橫丁", duration: "15 mins", dest: "麵屋 逢い田" },
+                    { type: "stop", time: "19:00", act: "麵屋 逢い田", desc: "高蛋白鴨肉沾麵體力補充。", highlight: true, areaRecs: ["味玉鴨沾麵"], transSteps: ["步行前往"], ticket: "步行" },
+                    { type: "travel", time: "20:15", act: "離開餐廳", duration: "10 mins", dest: "秋葉原電器街" },
+                    { type: "stop", time: "20:30", act: "秋葉原電器街", desc: "採購 3C 與配件。", highlight: false, areaRecs: ["友都八喜", "動漫周邊"], transSteps: ["搭乘地鐵日比谷線一站"], ticket: "72H地鐵券" }
+                ]
+            },
+            D3: { 
+                date: "05.09", theme: "明治神宮 ‧ 南町田決戰", weather: "16-24°C | 晴多雲", 
+                outfit: "健身套裝 + 防風外套。", 
+                strategy: "今日步數最高。SHIBUYA SKY 夜景請確保預約時間。", 
+                img: "https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&q=80&w=800",
+                items: [
+                    { type:"stop", time: "09:00", act: "明治神宮", desc:"森林浴散步，預計停留 1.5 小時。", highlight:false, areaRecs:["神宮御苑", "大鳥居"], transSteps:["搭乘地鐵千代田線", "明治神宮前站下車"], ticket: "72H地鐵券" },
+                    { type:"travel", time: "10:30", act: "離開神宮", duration: "30 mins", dest: "澀谷敘敘苑" },
+                    { type:"stop", time: "11:00", act: "敘敘苑 (澀谷 315)", desc:"高樓層優質用餐體驗，預計停留 1.5 小時。", highlight:true, reserved:true, areaRecs:["商業午餐", "特級牛舌"], transSteps:["搭乘地鐵副都心線至澀谷站", "站前步行 3 分"], ticket: "72H地鐵券" },
+                    { type:"travel", time: "12:30", act: "離開敘敘苑", duration: "5 mins", dest: "HOKA 旗艦店" },
+                    { type:"stop", time: "12:35", act: "HOKA 澀谷旗艦店", desc:"位於 Shibuya AXSH，1 小時充裕選購。", highlight:true, areaRecs:["Bondi 9", "Arahi"], transSteps:["澀谷站旁步行直達"], ticket: "步行" },
+                    { type:"travel", time: "13:40", act: "離開澀谷 往南町田", duration: "36 mins", dest: "南町田 Outlet" },
+                    { type:"stop", time: "14:30", act: "南町田 Grandberry", desc:"Montbell 全日最大店與裝備掃貨。", highlight:true, areaRecs:["Montbell", "Salomon"], transSteps:["搭乘東急田園都市線(急行)", "南町田車站直達"], ticket: "Suica" },
+                    { type:"travel", time: "18:30", act: "離開 Outlet", duration: "36 mins", dest: "澀谷車站" },
+                    { type:"stop", time: "19:30", act: "晚餐：Nabezo / Negishi", desc:"壽喜燒吃到飽或烤牛舌，補充體力。", highlight:false, areaRecs:["高蛋白牛肉"], transSteps:["搭乘東急線回程 (18:34/18:54急行)", "回澀谷後步行前往餐廳"], ticket: "Suica" },
+                    { type:"travel", time: "20:45", act: "離開餐廳", duration: "10 mins", dest: "SHIBUYA SKY" },
+                    { type:"stop", time: "21:00", act: "SHIBUYA SKY (夜景)", desc:"Scramble Square 14 樓報到。", highlight:true, areaRecs:["360度展望台"], transSteps:["步行至 Shibuya Scramble Square", "搭電梯直達 14F"], ticket: "步行" },
+                    { type:"travel", time: "22:10", act: "離開澀谷 往上野", duration: "27 mins", dest: "上野廣小路" },
+                    { type:"stop", time: "22:45", act: "返回飯店", desc:"結束高強度的一天。", highlight:false, areaRecs:["休息"], transSteps:["搭乘地鐵銀座線直達上野廣小路"], ticket: "72H地鐵券" }
+                ] 
+            },
+            D4: { 
+                date: "05.10", theme: "精品 ‧ 表參道採購", weather: "15-21°C | 局部晴", 
+                outfit: "全黑修身套裝。Bondi 9 黑極佳。", 
+                strategy: "表參道坡道多。精品退稅記得帶護照正本。", 
+                img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=800",
+                items: [
+                    { type:"stop", time: "09:00", act: "東京鐵塔", desc:"赤羽橋站角度最美。", highlight:false, areaRecs:["公園草皮", "經典角度"], transSteps:["搭乘地鐵大江戶線", "赤羽橋站下車"], ticket: "72H地鐵券" },
+                    { type:"travel", time: "10:30", act: "離開鐵塔", duration: "20 mins", dest: "銀座商圈" },
+                    { type:"stop", time: "11:00", act: "銀座精品採買", desc:"Celine / YSL / Gucci", highlight:true, areaRecs:["三越/松屋", "Mercer Brunch"], transSteps:["搭乘地鐵日比谷線至銀座站", "銀座站下車直結"], ticket: "72H地鐵券" },
+                    { type:"travel", time: "13:30", act: "離開銀座", duration: "25 mins", dest: "表參道/原宿" },
+                    { type:"stop", time: "14:00", act: "表參道 ➔ 原宿", desc:"街區潮流服飾與香水採買。", highlight:true, areaRecs:["表參道 Hills", "貓街"], transSteps:["搭乘地鐵銀座線直達表參道"], ticket: "72H地鐵券" },
+                    { type:"travel", time: "16:00", act: "離開原宿", duration: "20 mins", dest: "新宿 Windsor" },
+                    { type:"stop", time: "16:30", act: "新宿 Windsor 羽球", desc:"專業羽球裝備與穿線。", highlight:true, areaRecs:["Yonex 拍", "Victor 鞋"], transSteps:["副都心線轉丸之內線", "新宿南口步行 3 分"], ticket: "72H地鐵券" },
+                    { type:"travel", time: "19:00", act: "前往晚餐", duration: "15 mins", dest: "炸牛排 もと村" },
+                    { type:"stop", time: "19:30", act: "新宿 Uniqlo / GU", desc:"最後衣物補齊與晚餐。", highlight:false, areaRecs:["炸牛排もと村", "新宿東口"], transSteps:["步行前往東口商圈"], ticket: "步行" }
+                ] 
+            },
+            D5: { 
+                date: "05.11", theme: "河口湖 ‧ 富士眺望", weather: "13-19°C | 溫冷", 
+                outfit: "保暖防風外套 + 休閒褲。", 
+                strategy: "地鐵票 08:30 到期。晚上回程需改刷 Suica。", 
+                img: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&q=80&w=800",
+                items: [
+                    { type:"stop", time: "08:00", act: "河口湖一日遊", desc:"富士山景觀與河口湖步道。", highlight:true, areaRecs:["餺飥不動", "大石公園"], transSteps:["新宿西口集合"], ticket: "專車" },
+                    { type:"travel", time: "18:30", act: "離開河口湖", duration: "2 hrs", dest: "新宿站" },
+                    { type:"stop", time: "20:30", act: "新宿最終補貨", desc:"買齊伴手禮、零食。", highlight:false, areaRecs:["Negishi 牛舌", "伊勢丹"], transSteps:["抵達新宿後步行前往百貨", "回程進站刷 Suica"], ticket: "Suica" }
+                ] 
+            },
+            D6: { 
+                date: "05.12", theme: "上野公園 ‧ 優雅回程", weather: "15-22°C | 晴", 
+                outfit: "舒適登機穿搭。", 
+                strategy: "機場 4F 有利久牛舌。CI 103 (13:35) 預定 11:30 前報到。", 
+                img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800",
+                items: [
+                    { type:"stop", time: "08:30", act: "上野恩賜公園 散步", desc:"最後晨間享受，放鬆身心。", highlight:false, areaRecs:["不忍池", "星巴克"], transSteps:["飯店步行 10 分鐘"], ticket: "步行" },
+                    { type:"travel", time: "09:40", act: "回飯店取行李", duration: "10 mins", dest: "京成上野站" },
+                    { type:"stop", time: "10:20", act: "京成上野站 (Skyliner)", desc:"搭乘 Skyliner 前往機場。", highlight:true, areaRecs:["機場免稅店", "利久牛舌"], transSteps:["正面出口進", "指定席入座"], ticket: "實體票" }
+                ] 
+            }
+        };
+
+        const mustBuyItems = [
+            { 
+                cat: "美食備案 (高蛋白)", 
+                items: [
+                    { name: "鍋ぞう Nabezo (壽喜燒吃到飽)", desc: "多處分店 | 11:30-23:00" },
+                    { name: "Negishi 烤牛舌 (連鎖低脂)", desc: "各大車站周邊 | 11:00-22:30" },
+                    { name: "極味屋 Kiwamiya (漢堡排)", desc: "澀谷 Parco 內 | 11:00-22:00" },
+                    { name: "利久牛舌", desc: "成田機場二航 4F | 11:00-21:00" },
+                    { name: "AFURI 拉麵 (推雞胸肉)", desc: "原宿/澀谷等 | 11:00-23:30" }
+                ] 
+            },
+            { 
+                cat: "藥妝重點 (上野 OS Drug)", 
+                items: [
+                    { name: "ZS 軟骨素 (270錠)", desc: "護膝高濃度版本" },
+                    { name: "合利他命 EX Plus", desc: "舒緩肩頸痠痛" },
+                    { name: "久光製藥 痠痛貼布", desc: "打完羽球必備" }
+                ] 
+            },
+            { 
+                cat: "運動與精品", 
+                items: [
+                    { name: "HOKA Bondi 9 黑", desc: "澀谷旗艦店 (AXSH 1F) | 11:00-21:00" },
+                    { name: "Yonex 羽球裝備", desc: "Windsor 新宿南口 | 10:30-19:30" },
+                    { name: "Montbell 戶外裝備", desc: "南町田 Grandberry Park | 10:00-20:00" },
+                    { name: "Celine / YSL", desc: "銀座三越/松屋 (憑護照領 5% 折扣) | 10:00-20:00" }
+                ] 
+            }
+        ];
+
+        // --- CORE ENGINE ---
+        let currentDay = 'D1';
+        let cart = JSON.parse(localStorage.getItem('tokyo_cart')) || [];
+        let aaData = JSON.parse(localStorage.getItem('tokyo_aa')) || [];
+
+        function init() {
+            renderDaySelector(); renderItinerary(); renderFoodShop();
+            renderShopList(); renderAA();
+            lucide.createIcons(); conv();
+        }
+
+        function renderDaySelector() {
+            const container = document.getElementById('day-selector');
+            container.innerHTML = '';
+            Object.keys(travelData).forEach(key => {
+                const active = currentDay === key;
+                const btn = document.createElement('button');
+                btn.className = `day-tab ${active ? 'day-tab-active' : ''}`;
+                btn.innerHTML = `<span class="day-tab-title">${key}</span><span class="day-tab-sub">${travelData[key].date}</span>`;
+                btn.onclick = () => { currentDay = key; renderDaySelector(); renderItinerary(); };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderItinerary() {
+            const data = travelData[currentDay];
+            document.getElementById('day-theme').innerText = data.theme;
+            document.getElementById('day-date').innerText = `2026.${data.date}`;
+            document.getElementById('day-weather').innerText = data.weather;
+            document.getElementById('outfit-detail').innerText = data.outfit;
+            document.getElementById('strategy-note').innerText = data.strategy;
+            
+            document.getElementById('day-bg-image').style.backgroundImage = `url('${data.img}')`;
+
+            const container = document.getElementById('itinerary-timeline');
+            container.innerHTML = '';
+
+            data.items.forEach((item) => {
+                if(item.type === 'stop') {
+                    const resTag = item.reserved ? `<span class="bg-red-600 text-white px-3 py-1 rounded-md text-[12px] font-black ml-2 shadow-sm align-middle tracking-widest">需預約</span>` : '';
+                    
+                    const row = document.createElement('div');
+                    row.className = "timeline-grid animate-fade-in";
+                    row.innerHTML = `
+                        <div class="timeline-time">${item.time}</div>
+                        <div class="timeline-spine-container">
+                            <div class="timeline-spine-line"></div>
+                            <div class="timeline-dot ${item.highlight ? 'bg-teal-900 border-yellow-400' : ''}"></div>
+                        </div>
+                        
+                        <div class="bg-white border border-slate-200 p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
+                            <h4 class="text-2xl font-black leading-tight text-slate-900 mb-3">${item.act} ${resTag}</h4>
+                            <p class="text-[14px] text-slate-500 font-bold mb-5 flex items-center gap-1 uppercase tracking-tight leading-snug"><i data-lucide="info" class="w-4 h-4 text-teal-600 flex-shrink-0"></i> ${item.desc}</p>
+                            
+                            <button onclick="goMap('${item.act}')" class="w-full bg-[#0F172A] text-white py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 shadow-md active:scale-95 mb-6">
+                                <i data-lucide="navigation" size="20"></i> 導航前往 <i data-lucide="external-link" size="16"></i>
+                            </button>
+
+                            <div class="mb-6 overflow-hidden">
+                                <p class="text-[12px] text-slate-400 font-black mb-3 tracking-[0.2em] uppercase flex items-center gap-1">🔗 區域推薦</p>
+                                <div class="flex flex-wrap gap-2">
+                                    ${item.areaRecs.map(rec => `<span class="area-pill-ex2"><i data-lucide="plus" class="w-4 h-4"></i>${rec}</span>`).join('')}
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-2 text-[12px] font-black text-teal-800 uppercase tracking-widest"><i data-lucide="train-front" size="16"></i> 交通詳解</div>
+                                    <div class="text-[12px] font-black text-white bg-teal-700 px-3 py-1 rounded-md shadow-sm">🎫 票券：${item.ticket}</div>
+                                </div>
+                                <div class="space-y-4 relative pl-4 border-l-2 border-dashed border-slate-200">
+                                    ${item.transSteps.map(s => `<div class="relative flex items-center"><div class="absolute -left-[21px] w-2.5 h-2.5 rounded-full bg-red-600 shadow-sm border border-white"></div><span class="text-sm font-bold text-slate-700">${s}</span></div>`).join('')}
+                                </div>
+                            </div>
+                        </div>`;
+                    container.appendChild(row);
+                } else {
+                    const row = document.createElement('div');
+                    row.className = "travel-row animate-fade-in";
+                    row.innerHTML = `
+                        <div class="timeline-time text-slate-400 opacity-60 text-sm">${item.time}</div>
+                        <div class="timeline-spine-container">
+                            <div class="timeline-spine-line"></div>
+                            <div class="timeline-dot-travel"></div>
+                        </div>
+                        <div class="flex items-center gap-2 py-1 text-slate-600 pl-2">
+                           <div class="text-sm font-bold">${item.act} ➔ <span class="font-black text-slate-800">${item.dest}</span> <span class="bg-slate-100 px-2 py-0.5 rounded-full ml-1 text-xs border border-slate-200 text-slate-600">⏱️ ${item.duration}</span></div>
+                        </div>`;
+                    container.appendChild(row);
+                }
+            });
+            lucide.createIcons();
+        }
+
+        function renderFoodShop() {
+            const con = document.getElementById('foodshop-list');
+            con.innerHTML = mustBuyItems.map(c => `
+                <div class="bg-white border border-slate-200 p-8 rounded-[3rem] shadow-sm">
+                    <h3 class="text-xl font-black mb-6 border-b-2 border-teal-100 pb-3 text-teal-900">${c.cat}</h3>
+                    <div class="space-y-4">
+                        ${c.items.map(i => `
+                            <div class="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                <div class="flex flex-col">
+                                    <span class="text-base font-black text-slate-900">${i.name}</span>
+                                    <span class="text-xs text-slate-500 font-bold mt-1">${i.desc}</span>
+                                </div>
+                                <button onclick="quickAdd('${i.name}')" class="bg-teal-800 text-white p-3 rounded-xl active:scale-90 shadow-sm"><i data-lucide="plus" size="20"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- AA & UTILS ---
+        function addAAExpense() {
+            const name = document.getElementById('aa-item-name').value;
+            const price = parseFloat(document.getElementById('aa-item-price').value);
+            const payer = document.querySelector('input[name="aa-payer"]:checked').value;
+            if(!name || isNaN(price)) return;
+            aaData.push({ name, price, payer });
+            saveAA(); renderAA();
+            document.getElementById('aa-item-name').value = '';
+            document.getElementById('aa-item-price').value = '';
+        }
+        function saveAA() { localStorage.setItem('tokyo_aa', JSON.stringify(aaData)); }
+        function renderAA() {
+            const con = document.getElementById('aa-list');
+            if(!con) return;
+            let tTotal = 0; let cTotal = 0;
+            con.innerHTML = aaData.map((ex, idx) => {
+                if(ex.payer === 'TASS') tTotal += ex.price; else cTotal += ex.price;
+                return `<div class="flex justify-between items-center bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-base">
+                    <span class="font-black ${ex.payer === 'TASS' ? 'text-teal-700' : 'text-orange-600'} w-16">${ex.payer}</span>
+                    <span class="flex-1 font-bold text-slate-800">${ex.name}</span>
+                    <span class="font-black text-slate-900 mr-4 font-mono">¥ ${ex.price.toLocaleString()}</span>
+                    <button onclick="delAA(${idx})" class="text-slate-400 active:text-red-500 transition-colors"><i data-lucide="trash-2" size="20"></i></button>
+                </div>`;
+            }).join('');
+            const total = tTotal + cTotal; const diff = tTotal - (total/2);
+            document.getElementById('aa-final-result').innerText = `總支出 ¥ ${total.toLocaleString()}`;
+            document.getElementById('aa-who-owes').innerHTML = Math.abs(diff) < 1 ? "✅ 目前帳目完美平衡" : diff > 0 ? `川 <span class="text-slate-400 mx-1">需支付</span> TASS：¥ ${Math.round(diff).toLocaleString()}` : `TASS <span class="text-slate-400 mx-1">需支付</span> 川：¥ ${Math.round(Math.abs(diff)).toLocaleString()}`;
+            lucide.createIcons();
+        }
+        function delAA(idx) { aaData.splice(idx,1); saveAA(); renderAA(); }
+        
+        function changeView(v) {
+            ['itinerary', 'foodshop', 'shopping', 'strategy', 'tools'].forEach(view => {
+                document.getElementById(`view-${view}`).classList.toggle('hidden', view !== v);
+                document.getElementById(`nav-${view}`).classList.toggle('tab-active', view === v);
+                document.getElementById(`nav-${view}`).classList.toggle('text-slate-500', view !== v);
+            });
+            window.scrollTo(0,0);
+        }
+        function goMap(loc) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc + ' 東京')}`, '_blank'); }
+        function conv() { 
+            const jInput = document.getElementById('jpy-input');
+            const tOutput = document.getElementById('twd-output');
+            if (jInput && tOutput) {
+                tOutput.innerText = Math.round(jInput.value * 0.215); 
+            }
+        }
+        function addShopItem() { 
+            const n = document.getElementById('shop-name').value; if(!n) return;
+            cart.push({name: n, note: document.getElementById('shop-note').value, done: false});
+            saveShop(); renderShopList(); document.getElementById('shop-name').value = ''; document.getElementById('shop-note').value = '';
+        }
+        function quickAdd(name) { cart.push({name, note: "推薦清單", done: false}); saveShop(); alert('已加入採購清單'); }
+        function saveShop() { localStorage.setItem('tokyo_cart', JSON.stringify(cart)); }
+        function renderShopList() {
+            const con = document.getElementById('current-shopping-list');
+            con.innerHTML = cart.map((it, idx) => `
+                <div class="flex items-center gap-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm ${it.done ? 'opacity-50 bg-slate-50' : ''}">
+                    <input type="checkbox" ${it.done ? 'checked' : ''} onchange="toggleItem(${idx})" class="w-8 h-8 accent-teal-700">
+                    <div class="flex-1 font-bold text-lg ${it.done ? 'line-through text-slate-400' : 'text-slate-800'}">${it.name} <span class="text-sm text-slate-500 ml-2">${it.note}</span></div>
+                    <button onclick="delItem(${idx})" class="text-slate-400 active:text-red-500 transition-colors"><i data-lucide="trash-2" size="24"></i></button>
+                </div>`).join('');
+            lucide.createIcons();
+        }
+        function toggleItem(idx) { cart[idx].done = !cart[idx].done; saveShop(); renderShopList(); }
+        function delItem(idx) { cart.splice(idx,1); saveShop(); renderShopList(); }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
