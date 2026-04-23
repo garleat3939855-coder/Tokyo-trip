@@ -1,700 +1,621 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOKYO J-PLANNER 2026 DESIGNER EDITION</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>東京 Tokyo Vibes</title>
+    
+    <!-- LINE/FB 專屬預覽縮圖 (讀取你的 PNG 圖片) -->
+    <meta property="og:title" content="東京 Tokyo Vibes">
+    <meta property="og:description" content="Tass & 川的專屬東京行程規劃">
+    <meta property="og:image" content="apple-touch-icon.png">
+    <meta property="og:type" content="website">
+
+    <!-- iOS 專屬主畫面圖示 (蘋果官方唯一指定檔名與格式，終結綠底白字) -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="apple-touch-icon.png">
+    
+    <!-- 強制 PWA 獨立應用程式模式 (消滅上下網址列，變成全螢幕 APP) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tokyo Vibes">
+    
+    <!-- 輕量級 Vue 3，保證本地端與手機完美運行 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap');
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        
+        /* 暴力清除所有手機瀏覽器的原生點擊高光，保持原生 APP 質感 */
+        * { -webkit-tap-highlight-color: transparent !important; }
+        button:focus, a:focus { outline: none !important; }
 
-        :root {
-            /* 奶油和紙底色 */
-            --color-bg: #F7F6F2; 
-            --color-slate: #0F172A; 
-            --color-teal: #0D9488;  
-            --color-teal-dark: #0F766E; 
-            --color-yellow: #FDE047;
-            --color-red: #DC2626;
+        body { background-color: #1a2b22; margin: 0; padding: 0; height: 100dvh; overflow: hidden; overscroll-behavior-y: none; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--color-bg);
-            color: var(--color-slate);
-            overscroll-behavior: none;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .font-serif { font-family: 'Noto Serif TC', serif; }
-        * { font-style: normal !important; }
-
-        /* =========================================
-           EX 1: 天數導航 (字體放大)
-           ========================================= */
-        .day-nav-container {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center; 
-            padding: 12px 16px 0 16px;
-            background-color: white;
-            border-bottom: 2px solid var(--color-teal-dark);
-        }
-        .day-tab {
-            background-color: var(--color-teal); 
-            color: rgba(255,255,255,0.8);
-            border-radius: 12px 12px 0 0;
-            padding: 10px 14px;
-            min-width: 68px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-right: 2px;
-            transition: all 0.2s ease;
-        }
-        .day-tab-active {
-            background-color: var(--color-teal-dark); 
-            color: white;
-            padding: 12px 16px 10px 16px;
-        }
-        .day-tab-title { 
-            font-size: 22px; /* 放大 */
-            font-weight: 900; 
-            line-height: 1.1; 
-            border-bottom: 2px solid transparent;
-            padding-bottom: 2px;
-        }
-        .day-tab-active .day-tab-title {
-            border-bottom: 2px solid white;
-        }
-        .day-tab-sub { 
-            font-size: 12px; /* 放大 */
-            font-weight: 700; 
-            margin-top: 4px;
-        }
-
-        /* =========================================
-           EX 2: 區域推薦 (字體放大)
-           ========================================= */
-        .area-pill-ex2 {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 6px 16px; /* 增加點擊範圍 */
-            border-radius: 9999px; 
-            background-color: #FFFFFF;
-            border: 1.5px solid #0D9488;
-            color: #0F766E;
-            font-size: 13px; /* 放大 */
-            font-weight: 900;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            white-space: nowrap;
-        }
-
-        /* =========================================
-           網格排版 (微調間距以適應大字)
-           ========================================= */
-        .timeline-grid {
-            display: grid;
-            grid-template-columns: 56px 24px 1fr; /* 留給時間更多空間 */
-            gap: 10px;
-            margin-bottom: 24px;
-        }
-        .timeline-time {
-            text-align: right;
-            font-size: 17px; /* 放大 */
-            font-weight: 900;
-            color: #475569;
-            padding-top: 4px;
-            letter-spacing: -0.5px;
-        }
-        .timeline-spine-container {
-            position: relative;
-            display: flex;
-            justify-content: center;
-        }
-        .timeline-spine-line {
-            position: absolute;
-            top: 16px;
-            bottom: -32px;
-            width: 2px;
-            background-image: repeating-linear-gradient(to bottom, #CBD5E1 0, #CBD5E1 6px, transparent 6px, transparent 12px);
-        }
-        .timeline-dot {
-            width: 20px;
-            height: 20px;
-            background-color: #0F172A;
-            border: 4px solid white;
-            border-radius: 50%;
-            position: relative;
-            z-index: 10;
-            margin-top: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .travel-row {
-            display: grid;
-            grid-template-columns: 56px 24px 1fr;
-            gap: 10px;
-            margin-bottom: 24px;
-            align-items: center;
-        }
-        .timeline-dot-travel {
-            width: 12px;
-            height: 12px;
-            background-color: white;
-            border: 2px solid #94A3B8;
-            border-radius: 50%;
-            position: relative;
-            z-index: 10;
-        }
-
-        .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 120px); }
-        .tab-active { color: var(--color-teal-dark); font-weight: 900; }
+        .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
-<body class="safe-bottom">
+<body class="flex justify-center selection:bg-[#8b9b82] selection:text-white font-sans text-gray-800">
 
-    <!-- Top Navigation (EX1) -->
-    <nav class="sticky top-0 z-50 shadow-sm">
-        <div class="day-nav-container no-scrollbar" id="day-selector">
-            <!-- JS Injected D1-D6 -->
-        </div>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main id="app-container" class="p-4 max-w-md mx-auto">
+    <div id="app" class="w-full max-w-md bg-[#1a2b22] h-full relative overflow-hidden shadow-2xl flex flex-col">
         
-        <!-- 1. 行程分頁 -->
-        <section id="view-itinerary" class="animate-fade-in">
-            <!-- 每日大標 -->
-            <div id="day-header-block" class="mb-8 bg-teal-800 rounded-[2rem] shadow-xl text-white relative overflow-hidden flex flex-col justify-end min-h-[180px] p-6">
-                <!-- 動態背景圖層 -->
-                <div id="day-bg-image" class="absolute inset-0 w-full h-full bg-cover bg-center opacity-40 mix-blend-overlay"></div>
-                <div class="absolute inset-0 bg-gradient-to-t from-teal-900 via-teal-900/70 to-transparent"></div>
+        <div class="flex-1 overflow-hidden relative">
+            
+            <!-- 1. 行程 (Itinerary) -->
+            <div v-if="currentTab === 'itinerary'" class="pb-[100px] h-full overflow-y-auto no-scrollbar relative bg-[#1a2b22]">
                 
-                <div class="relative z-10">
-                    <h2 id="day-theme" class="text-4xl font-black text-white font-serif tracking-tight mb-3">載入中...</h2>
-                    <div class="flex items-center gap-2 text-sm font-bold text-teal-100 mb-3">
-                        <i data-lucide="calendar" class="w-4 h-4 text-yellow-400"></i>
-                        <span id="day-date">YYYY.MM.DD</span>
-                        <span class="mx-1">|</span>
-                        <span id="day-weather">讀取中</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Detailed Timeline -->
-            <div id="itinerary-timeline" class="pt-2">
-                <!-- JS Injected Rows -->
-            </div>
-
-            <!-- Bottom Note -->
-            <div class="mt-8 space-y-6">
-                <div class="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
-                    <div class="flex items-center gap-2 mb-4 text-slate-800 font-black text-base">
-                        <i data-lucide="shirt" class="w-6 h-6 text-teal-700"></i> 本日穿搭詳解
-                    </div>
-                    <p id="outfit-detail" class="text-base text-slate-600 font-bold leading-relaxed mb-3"></p>
-                    <p class="text-base text-teal-700 font-black border-t border-slate-100 pt-3 mt-3">※ 鞋款：HOKA Bondi 9 黑</p>
-                </div>
-
-                <div class="bg-[#111827] text-white p-6 rounded-3xl shadow-xl">
-                    <div class="flex items-center gap-2 mb-4 text-yellow-400 font-black text-base">
-                        <i data-lucide="info" class="w-6 h-6"></i> 每日專屬策略 (J-Type Strategy)
-                    </div>
-                    <p id="strategy-note" class="text-base text-slate-200 font-bold leading-relaxed"></p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 2. 美食購物分頁 -->
-        <section id="view-foodshop" class="hidden animate-fade-in space-y-6">
-            <h2 class="text-3xl font-black border-l-8 border-teal-800 pl-4 font-serif text-slate-900">美食購物推薦</h2>
-            <div class="bg-teal-50 p-5 rounded-2xl text-base font-bold text-teal-800 border border-teal-100 flex items-start gap-3">
-                <i data-lucide="info" class="w-6 h-6 flex-shrink-0 mt-0.5"></i> 點擊右側的 ＋ 號，一鍵加入您的個人採購清單！
-            </div>
-            <div id="foodshop-list" class="space-y-6"></div>
-        </section>
-
-        <!-- 3. 清單分頁 -->
-        <section id="view-shopping" class="hidden animate-fade-in">
-            <h2 class="text-3xl font-black mb-6 border-l-8 border-teal-800 pl-4 font-serif text-slate-900">採購清單</h2>
-            <div class="bg-white border border-slate-200 p-6 rounded-[2rem] mb-8 shadow-sm">
-                <input type="text" id="shop-name" placeholder="輸入商品名稱..." class="w-full bg-slate-50 border border-slate-200 p-5 rounded-2xl text-slate-900 mb-4 outline-none focus:border-teal-600 font-bold text-base">
-                <div class="flex gap-3">
-                    <input type="text" id="shop-note" placeholder="備註/數量" class="flex-1 bg-slate-50 border border-slate-200 p-5 rounded-2xl text-slate-900 outline-none font-bold text-base">
-                    <button onclick="addShopItem()" class="bg-teal-800 text-white px-8 py-5 rounded-2xl font-black shadow-md active:scale-95 transition-all text-base">新增</button>
-                </div>
-            </div>
-            <div id="current-shopping-list" class="space-y-4"></div>
-        </section>
-
-        <!-- 4. 戰略核心 (EX3) -->
-        <section id="view-strategy" class="hidden animate-fade-in pb-10">
-            <div class="flex items-center gap-3 mb-8 border-l-8 border-teal-800 pl-4">
-                <h2 class="text-3xl font-black font-serif text-slate-900 tracking-tight">戰略核心 Memo</h2>
-            </div>
-            
-            <div class="bg-[#111827] p-8 rounded-[2.5rem] shadow-2xl space-y-8">
-                
-                <!-- 色塊分區 1: 預約 (深藏青) -->
-                <div class="bg-slate-800 p-6 rounded-[2rem] border border-slate-700">
-                    <h3 class="text-xl font-black text-white mb-5 flex items-center gap-2 border-b border-white/10 pb-4">
-                        <i data-lucide="bookmark" class="text-yellow-400 w-6 h-6"></i> 餐廳預約區
-                    </h3>
-                    <div class="space-y-4">
-                        <a href="https://www.bouya.jp/shop/ueno6/" target="_blank" class="flex items-center justify-between bg-white/5 p-5 rounded-2xl hover:bg-teal-900/50 transition-all">
-                            <span class="font-bold text-slate-200 text-base">一頭牛燒肉 房家 (上野)</span>
-                            <i data-lucide="external-link" class="w-5 h-5 text-teal-400"></i>
-                        </a>
-                        <a href="https://www.asakusaimahan.co.jp/" target="_blank" class="flex items-center justify-between bg-white/5 p-5 rounded-2xl hover:bg-teal-900/50 transition-all">
-                            <span class="font-bold text-slate-200 text-base">淺草今半 (國際通本店)</span>
-                            <i data-lucide="external-link" class="w-5 h-5 text-teal-400"></i>
-                        </a>
-                        <a href="https://www.jojoen.co.jp/shop/jojoen/shibuya315/" target="_blank" class="flex items-center justify-between bg-white/5 p-5 rounded-2xl hover:bg-teal-900/50 transition-all">
-                            <span class="font-bold text-slate-200 text-base">敘敘苑 (澀谷 315店)</span>
-                            <i data-lucide="external-link" class="w-5 h-5 text-teal-400"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 色塊分區 2: 地鐵 (深孔雀綠) -->
-                <div class="bg-teal-900/60 p-6 rounded-[2rem] border border-teal-700/50">
-                    <h3 class="text-xl font-black text-white mb-5 flex items-center gap-2 border-b border-teal-700/50 pb-4">
-                        <i data-lucide="subway" class="text-teal-200 w-6 h-6"></i> 地鐵套票區
-                    </h3>
-                    <div>
-                        <p class="text-xl font-black leading-loose text-white">
-                            <span class="text-teal-200">開通：</span>Day 2 <span class="text-yellow-400 bg-black/30 px-2 py-1 rounded">08:30</span> (淺草入站)<br/>
-                            <span class="text-teal-200">結束：</span>Day 5 <span class="text-red-400 bg-black/30 px-2 py-1 rounded">08:30</span> 效期截止
-                        </p>
-                        <div class="mt-5 bg-[#DC2626] p-4 rounded-xl shadow-md border border-red-400">
-                            <p class="text-base font-black text-white text-center tracking-wide">
-                                ※ 逾期後請直接感應手機 Suica 進出站
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 色塊分區 3: 提醒 (暗酒紅) -->
-                <div class="bg-red-900/40 p-6 rounded-[2rem] border border-red-800/50">
-                    <h3 class="text-xl font-black text-red-100 mb-5 flex items-center gap-2 border-b border-red-800/50 pb-4">
-                        <i data-lucide="bell-ring" class="text-red-400 w-6 h-6"></i> 搶票與提醒
-                    </h3>
-                    <p class="text-base font-bold text-white leading-relaxed mb-5">
-                        SHIBUYA SKY 夜景：<br/>
-                        請務必設定鬧鐘於 <span class="text-yellow-400 font-black text-lg bg-black/30 px-2 py-1 rounded">4/25 23:00</span> (台時) 搶購 5/9 21:00 的入場門票。
-                    </p>
-                    <p class="text-base font-bold text-white leading-relaxed">
-                        精品退稅：<br/>
-                        必須隨身攜帶 <span class="text-yellow-400 font-black">護照正本</span>。
-                    </p>
-                </div>
-
-                <!-- 色塊分區 4: 航班 (深靛藍) -->
-                <div class="bg-blue-900/40 p-6 rounded-[2rem] border border-blue-800/50">
-                    <h3 class="text-xl font-black text-blue-100 mb-5 flex items-center gap-2 border-b border-blue-800/50 pb-4">
-                        <i data-lucide="plane-takeoff" class="text-blue-400 w-6 h-6"></i> 航班時刻表
-                    </h3>
-                    <div class="space-y-5">
-                        <div class="flex justify-between items-center">
-                            <span class="text-blue-200 font-bold text-base">去程 5/7 CI 126</span>
-                            <span class="font-black text-white text-lg">13:40 ➔ 17:35 NRT</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-blue-200 font-bold text-base">回程 5/12 CI 103</span>
-                            <span class="font-black text-white text-lg">13:35 ➔ 16:20 TPE</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- 5. 工具分頁 -->
-        <section id="view-tools" class="hidden animate-fade-in space-y-6">
-            <h2 class="text-3xl font-black border-l-8 border-teal-800 pl-4 font-serif text-slate-900">隨身工具箱</h2>
-            
-            <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
-                <h3 class="font-black text-blue-600 mb-4 flex items-center gap-2 text-xl"><i data-lucide="languages" class="w-7 h-7"></i> Google 翻譯</h3>
-                <p class="text-sm text-slate-500 font-bold mb-5">即時對話與菜單拍照翻譯</p>
-                <a href="https://translate.google.com/m?sl=ja&tl=zh-TW" target="_blank" class="block w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-center shadow-md active:scale-95 transition-all text-lg">
-                    開啟手機版翻譯
-                </a>
-            </div>
-
-            <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
-                <h3 class="font-black text-slate-800 mb-5 flex items-center gap-2 text-xl"><i data-lucide="calculator" class="w-7 h-7"></i> 匯率試算 JPY/TWD</h3>
-                <div class="flex items-center gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                    <input type="number" id="jpy-input" value="1000" class="w-full text-3xl font-black bg-transparent outline-none text-slate-900" oninput="conv()">
-                    <i data-lucide="arrow-right" class="text-slate-400 w-6 h-6"></i>
-                    <div id="twd-output" class="w-full text-3xl font-black text-teal-700 text-right">215</div>
-                </div>
-            </div>
-            
-            <div class="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm">
-                <h3 class="font-black text-slate-800 mb-5 flex items-center gap-2 text-xl"><i data-lucide="users" class="w-7 h-7"></i> AA 結算計帳</h3>
-                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-5">
-                    <div class="flex gap-3 mb-4">
-                        <input type="text" id="aa-item-name" placeholder="輸入項目" class="flex-1 p-4 rounded-xl border border-slate-300 text-base font-bold outline-none">
-                        <input type="number" id="aa-item-price" placeholder="¥金額" class="w-32 p-4 rounded-xl border border-slate-300 text-base font-mono font-bold outline-none">
-                    </div>
-                    <div class="flex items-center gap-6 text-base font-black mt-3">
-                        <span class="text-slate-500">支付者：</span>
-                        <label class="flex items-center gap-2 cursor-pointer text-teal-800">
-                            <input type="radio" name="aa-payer" value="TASS" checked class="w-6 h-6 accent-teal-800"> TASS
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer text-orange-600">
-                            <input type="radio" name="aa-payer" value="川" class="w-6 h-6 accent-teal-800"> 川
-                        </label>
-                    </div>
-                </div>
-                <button onclick="addAAExpense()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-lg active:scale-95 transition-all mb-8 text-lg">新增紀錄</button>
-
-                <div id="aa-list" class="space-y-3 mb-8 max-h-64 overflow-y-auto no-scrollbar"></div>
-
-                <div class="bg-teal-800 text-white p-8 rounded-[2rem] text-center shadow-md">
-                    <div id="aa-summary" class="text-sm font-bold opacity-80 mb-2 tracking-widest">統計結果</div>
-                    <div id="aa-final-result" class="text-4xl font-black tracking-tighter mb-4">總支出 ¥ 0</div>
-                    <div id="aa-who-owes" class="text-base text-yellow-300 font-black p-4 bg-white/10 rounded-xl border border-white/20">✅ 目前帳目完美平衡</div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Bottom Navigation (字體與 Icon 放大) -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center p-3 pb-8 z-50 shadow-[0_-10px_35px_rgba(0,0,0,0.03)]">
-        <button onclick="changeView('itinerary')" id="nav-itinerary" class="flex flex-col items-center gap-1 tab-active">
-            <i data-lucide="map-pin" class="w-6 h-6"></i><span class="text-[12px] font-black">行程</span>
-        </button>
-        <button onclick="changeView('foodshop')" id="nav-foodshop" class="flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="utensils" class="w-6 h-6"></i><span class="text-[12px] font-black">推薦</span>
-        </button>
-        <button onclick="changeView('shopping')" id="nav-shopping" class="flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="check-square" class="w-6 h-6"></i><span class="text-[12px] font-black">清單</span>
-        </button>
-        <button onclick="changeView('strategy')" id="nav-strategy" class="flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="zap" class="w-6 h-6"></i><span class="text-[12px] font-black">戰略</span>
-        </button>
-        <button onclick="changeView('tools')" id="nav-tools" class="flex flex-col items-center gap-1 text-slate-500">
-            <i data-lucide="layout-grid" class="w-6 h-6"></i><span class="text-[12px] font-black">工具</span>
-        </button>
-    </nav>
-
-    <script>
-        // --- COMPLETE 6-DAY DATA ---
-        const travelData = {
-            D1: {
-                date: "05.07", theme: "上野著陸 ‧ 寧靜探路", weather: "15°C - 22°C | 晴時多雲",
-                outfit: "薄長袖襯衫 + 針織外套。5 月晚間微涼。",
-                strategy: "抵達首晚建議先在阿美橫丁勘查運動用品店位址，保持體力準備明日採購。",
-                img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800",
-                items: [
-                    { type: "stop", time: "17:35", act: "抵達成田機場 T2", desc: "提領行李，辦理入境。", highlight: false, areaRecs: ["呼吸巧克力", "LeTao 餅乾"], transSteps: ["大廳搭手扶梯上 2F", "前往京成機場站", "領取 Skyliner 車票"], ticket: "實體票" },
-                    { type: "travel", time: "18:30", act: "離開京成上野站", duration: "10 mins", dest: "相鐵飯店" },
-                    { type: "stop", time: "19:00", act: "相鐵 FRESA INN 入住", desc: "辦理入住、放置行李。", highlight: true, areaRecs: ["多慶屋", "上野廣小路"], transSteps: ["京成正面出口往中央通直行", "A4 出口對面抵達飯店"], ticket: "步行" },
-                    { type: "travel", time: "20:00", act: "離開飯店", duration: "5 mins", dest: "一頭牛燒肉 房家" },
-                    { type: "stop", time: "20:30", act: "一頭牛燒肉 房家", desc: "和牛燒肉高蛋白補給。", highlight: true, reserved: true, areaRecs: ["和牛拼盤", "盛岡冷麵"], transSteps: ["步行前往六丁目巷內"], ticket: "步行" }
-                ]
-            },
-            D2: {
-                date: "05.08", theme: "淺草晴空 ‧ 阿美橫丁", weather: "14°C - 23°C | 晴朗",
-                outfit: "短袖內搭 + 休閒襯衫。",
-                strategy: "地鐵套票正式啟用。今日完成藥妝重頭戲採買。",
-                img: "https://images.unsplash.com/photo-1533050487297-09b45013190a?auto=format&fit=crop&q=80&w=800",
-                items: [
-                    { type: "stop", time: "08:30", act: "抵達雷門 (淺草寺)", desc: "地鐵票正式開通，仲見世通散策。", highlight: true, areaRecs: ["吉備糰子", "三社祭"], transSteps: ["搭乘地鐵銀座線", "淺草站 1 號出口"], ticket: "72H地鐵券" },
-                    { type: "travel", time: "11:00", act: "離開淺草寺", duration: "10 mins", dest: "淺草今半" },
-                    { type: "stop", time: "11:30", act: "淺草今半 (本店)", desc: "高品質和牛壽喜燒定食。", highlight: true, reserved: true, areaRecs: ["午餐定食", "牛肉包"], transSteps: ["步行至國際通大馬路"], ticket: "步行" },
-                    { type: "travel", time: "13:00", act: "離開今半", duration: "15 mins", dest: "東京晴空塔" },
-                    { type: "stop", time: "13:30", act: "東京晴空塔", desc: "Solamachi 3F 勘查運動專櫃。", highlight: false, areaRecs: ["敘敘苑醬汁", "運動品牌"], transSteps: ["搭乘地鐵淺草線", "押上站下車直連商場"], ticket: "72H地鐵券" },
-                    { type: "travel", time: "16:00", act: "離開晴空塔", duration: "25 mins", dest: "阿美橫丁" },
-                    { type: "stop", time: "16:30", act: "阿美橫丁 (OS Drug)", desc: "買齊軟骨素、合利他命等藥品。", highlight: true, areaRecs: ["軟骨素 ZS", "合利他命"], transSteps: ["搭乘地鐵銀座線", "上野廣小路站下車"], ticket: "72H地鐵券" },
-                    { type: "travel", time: "18:45", act: "離開阿美橫丁", duration: "15 mins", dest: "麵屋 逢い田" },
-                    { type: "stop", time: "19:00", act: "麵屋 逢い田", desc: "高蛋白鴨肉沾麵體力補充。", highlight: true, areaRecs: ["味玉鴨沾麵"], transSteps: ["步行前往"], ticket: "步行" },
-                    { type: "travel", time: "20:15", act: "離開餐廳", duration: "10 mins", dest: "秋葉原電器街" },
-                    { type: "stop", time: "20:30", act: "秋葉原電器街", desc: "採購 3C 與配件。", highlight: false, areaRecs: ["友都八喜", "動漫周邊"], transSteps: ["搭乘地鐵日比谷線一站"], ticket: "72H地鐵券" }
-                ]
-            },
-            D3: { 
-                date: "05.09", theme: "明治神宮 ‧ 南町田決戰", weather: "16-24°C | 晴多雲", 
-                outfit: "健身套裝 + 防風外套。", 
-                strategy: "今日步數最高。SHIBUYA SKY 夜景請確保預約時間。", 
-                img: "https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&q=80&w=800",
-                items: [
-                    { type:"stop", time: "09:00", act: "明治神宮", desc:"森林浴散步，預計停留 1.5 小時。", highlight:false, areaRecs:["神宮御苑", "大鳥居"], transSteps:["搭乘地鐵千代田線", "明治神宮前站下車"], ticket: "72H地鐵券" },
-                    { type:"travel", time: "10:30", act: "離開神宮", duration: "30 mins", dest: "澀谷敘敘苑" },
-                    { type:"stop", time: "11:00", act: "敘敘苑 (澀谷 315)", desc:"高樓層優質用餐體驗，預計停留 1.5 小時。", highlight:true, reserved:true, areaRecs:["商業午餐", "特級牛舌"], transSteps:["搭乘地鐵副都心線至澀谷站", "站前步行 3 分"], ticket: "72H地鐵券" },
-                    { type:"travel", time: "12:30", act: "離開敘敘苑", duration: "5 mins", dest: "HOKA 旗艦店" },
-                    { type:"stop", time: "12:35", act: "HOKA 澀谷旗艦店", desc:"位於 Shibuya AXSH，1 小時充裕選購。", highlight:true, areaRecs:["Bondi 9", "Arahi"], transSteps:["澀谷站旁步行直達"], ticket: "步行" },
-                    { type:"travel", time: "13:40", act: "離開澀谷 往南町田", duration: "36 mins", dest: "南町田 Outlet" },
-                    { type:"stop", time: "14:30", act: "南町田 Grandberry", desc:"Montbell 全日最大店與裝備掃貨。", highlight:true, areaRecs:["Montbell", "Salomon"], transSteps:["搭乘東急田園都市線(急行)", "南町田車站直達"], ticket: "Suica" },
-                    { type:"travel", time: "18:30", act: "離開 Outlet", duration: "36 mins", dest: "澀谷車站" },
-                    { type:"stop", time: "19:30", act: "晚餐：Nabezo / Negishi", desc:"壽喜燒吃到飽或烤牛舌，補充體力。", highlight:false, areaRecs:["高蛋白牛肉"], transSteps:["搭乘東急線回程 (18:34/18:54急行)", "回澀谷後步行前往餐廳"], ticket: "Suica" },
-                    { type:"travel", time: "20:45", act: "離開餐廳", duration: "10 mins", dest: "SHIBUYA SKY" },
-                    { type:"stop", time: "21:00", act: "SHIBUYA SKY (夜景)", desc:"Scramble Square 14 樓報到。", highlight:true, areaRecs:["360度展望台"], transSteps:["步行至 Shibuya Scramble Square", "搭電梯直達 14F"], ticket: "步行" },
-                    { type:"travel", time: "22:10", act: "離開澀谷 往上野", duration: "27 mins", dest: "上野廣小路" },
-                    { type:"stop", time: "22:45", act: "返回飯店", desc:"結束高強度的一天。", highlight:false, areaRecs:["休息"], transSteps:["搭乘地鐵銀座線直達上野廣小路"], ticket: "72H地鐵券" }
-                ] 
-            },
-            D4: { 
-                date: "05.10", theme: "精品 ‧ 表參道採購", weather: "15-21°C | 局部晴", 
-                outfit: "全黑修身套裝。Bondi 9 黑極佳。", 
-                strategy: "表參道坡道多。精品退稅記得帶護照正本。", 
-                img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=800",
-                items: [
-                    { type:"stop", time: "09:00", act: "東京鐵塔", desc:"赤羽橋站角度最美。", highlight:false, areaRecs:["公園草皮", "經典角度"], transSteps:["搭乘地鐵大江戶線", "赤羽橋站下車"], ticket: "72H地鐵券" },
-                    { type:"travel", time: "10:30", act: "離開鐵塔", duration: "20 mins", dest: "銀座商圈" },
-                    { type:"stop", time: "11:00", act: "銀座精品採買", desc:"Celine / YSL / Gucci", highlight:true, areaRecs:["三越/松屋", "Mercer Brunch"], transSteps:["搭乘地鐵日比谷線至銀座站", "銀座站下車直結"], ticket: "72H地鐵券" },
-                    { type:"travel", time: "13:30", act: "離開銀座", duration: "25 mins", dest: "表參道/原宿" },
-                    { type:"stop", time: "14:00", act: "表參道 ➔ 原宿", desc:"街區潮流服飾與香水採買。", highlight:true, areaRecs:["表參道 Hills", "貓街"], transSteps:["搭乘地鐵銀座線直達表參道"], ticket: "72H地鐵券" },
-                    { type:"travel", time: "16:00", act: "離開原宿", duration: "20 mins", dest: "新宿 Windsor" },
-                    { type:"stop", time: "16:30", act: "新宿 Windsor 羽球", desc:"專業羽球裝備與穿線。", highlight:true, areaRecs:["Yonex 拍", "Victor 鞋"], transSteps:["副都心線轉丸之內線", "新宿南口步行 3 分"], ticket: "72H地鐵券" },
-                    { type:"travel", time: "19:00", act: "前往晚餐", duration: "15 mins", dest: "炸牛排 もと村" },
-                    { type:"stop", time: "19:30", act: "新宿 Uniqlo / GU", desc:"最後衣物補齊與晚餐。", highlight:false, areaRecs:["炸牛排もと村", "新宿東口"], transSteps:["步行前往東口商圈"], ticket: "步行" }
-                ] 
-            },
-            D5: { 
-                date: "05.11", theme: "河口湖 ‧ 富士眺望", weather: "13-19°C | 溫冷", 
-                outfit: "保暖防風外套 + 休閒褲。", 
-                strategy: "地鐵票 08:30 到期。晚上回程需改刷 Suica。", 
-                img: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&q=80&w=800",
-                items: [
-                    { type:"stop", time: "08:00", act: "河口湖一日遊", desc:"富士山景觀與河口湖步道。", highlight:true, areaRecs:["餺飥不動", "大石公園"], transSteps:["新宿西口集合"], ticket: "專車" },
-                    { type:"travel", time: "18:30", act: "離開河口湖", duration: "2 hrs", dest: "新宿站" },
-                    { type:"stop", time: "20:30", act: "新宿最終補貨", desc:"買齊伴手禮、零食。", highlight:false, areaRecs:["Negishi 牛舌", "伊勢丹"], transSteps:["抵達新宿後步行前往百貨", "回程進站刷 Suica"], ticket: "Suica" }
-                ] 
-            },
-            D6: { 
-                date: "05.12", theme: "上野公園 ‧ 優雅回程", weather: "15-22°C | 晴", 
-                outfit: "舒適登機穿搭。", 
-                strategy: "機場 4F 有利久牛舌。CI 103 (13:35) 預定 11:30 前報到。", 
-                img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800",
-                items: [
-                    { type:"stop", time: "08:30", act: "上野恩賜公園 散步", desc:"最後晨間享受，放鬆身心。", highlight:false, areaRecs:["不忍池", "星巴克"], transSteps:["飯店步行 10 分鐘"], ticket: "步行" },
-                    { type:"travel", time: "09:40", act: "回飯店取行李", duration: "10 mins", dest: "京成上野站" },
-                    { type:"stop", time: "10:20", act: "京成上野站 (Skyliner)", desc:"搭乘 Skyliner 前往機場。", highlight:true, areaRecs:["機場免稅店", "利久牛舌"], transSteps:["正面出口進", "指定席入座"], ticket: "實體票" }
-                ] 
-            }
-        };
-
-        const mustBuyItems = [
-            { 
-                cat: "美食備案 (高蛋白)", 
-                items: [
-                    { name: "鍋ぞう Nabezo (壽喜燒吃到飽)", desc: "多處分店 | 11:30-23:00" },
-                    { name: "Negishi 烤牛舌 (連鎖低脂)", desc: "各大車站周邊 | 11:00-22:30" },
-                    { name: "極味屋 Kiwamiya (漢堡排)", desc: "澀谷 Parco 內 | 11:00-22:00" },
-                    { name: "利久牛舌", desc: "成田機場二航 4F | 11:00-21:00" },
-                    { name: "AFURI 拉麵 (推雞胸肉)", desc: "原宿/澀谷等 | 11:00-23:30" }
-                ] 
-            },
-            { 
-                cat: "藥妝重點 (上野 OS Drug)", 
-                items: [
-                    { name: "ZS 軟骨素 (270錠)", desc: "護膝高濃度版本" },
-                    { name: "合利他命 EX Plus", desc: "舒緩肩頸痠痛" },
-                    { name: "久光製藥 痠痛貼布", desc: "打完羽球必備" }
-                ] 
-            },
-            { 
-                cat: "運動與精品", 
-                items: [
-                    { name: "HOKA Bondi 9 黑", desc: "澀谷旗艦店 (AXSH 1F) | 11:00-21:00" },
-                    { name: "Yonex 羽球裝備", desc: "Windsor 新宿南口 | 10:30-19:30" },
-                    { name: "Montbell 戶外裝備", desc: "南町田 Grandberry Park | 10:00-20:00" },
-                    { name: "Celine / YSL", desc: "銀座三越/松屋 (憑護照領 5% 折扣) | 10:00-20:00" }
-                ] 
-            }
-        ];
-
-        // --- CORE ENGINE ---
-        let currentDay = 'D1';
-        let cart = JSON.parse(localStorage.getItem('tokyo_cart')) || [];
-        let aaData = JSON.parse(localStorage.getItem('tokyo_aa')) || [];
-
-        function init() {
-            renderDaySelector(); renderItinerary(); renderFoodShop();
-            renderShopList(); renderAA();
-            lucide.createIcons(); conv();
-        }
-
-        function renderDaySelector() {
-            const container = document.getElementById('day-selector');
-            container.innerHTML = '';
-            Object.keys(travelData).forEach(key => {
-                const active = currentDay === key;
-                const btn = document.createElement('button');
-                btn.className = `day-tab ${active ? 'day-tab-active' : ''}`;
-                btn.innerHTML = `<span class="day-tab-title">${key}</span><span class="day-tab-sub">${travelData[key].date}</span>`;
-                btn.onclick = () => { currentDay = key; renderDaySelector(); renderItinerary(); };
-                container.appendChild(btn);
-            });
-        }
-
-        function renderItinerary() {
-            const data = travelData[currentDay];
-            document.getElementById('day-theme').innerText = data.theme;
-            document.getElementById('day-date').innerText = `2026.${data.date}`;
-            document.getElementById('day-weather').innerText = data.weather;
-            document.getElementById('outfit-detail').innerText = data.outfit;
-            document.getElementById('strategy-note').innerText = data.strategy;
-            
-            document.getElementById('day-bg-image').style.backgroundImage = `url('${data.img}')`;
-
-            const container = document.getElementById('itinerary-timeline');
-            container.innerHTML = '';
-
-            data.items.forEach((item) => {
-                if(item.type === 'stop') {
-                    const resTag = item.reserved ? `<span class="bg-red-600 text-white px-3 py-1 rounded-md text-[12px] font-black ml-2 shadow-sm align-middle tracking-widest">需預約</span>` : '';
-                    
-                    const row = document.createElement('div');
-                    row.className = "timeline-grid animate-fade-in";
-                    row.innerHTML = `
-                        <div class="timeline-time">${item.time}</div>
-                        <div class="timeline-spine-container">
-                            <div class="timeline-spine-line"></div>
-                            <div class="timeline-dot ${item.highlight ? 'bg-teal-900 border-yellow-400' : ''}"></div>
-                        </div>
+                <!-- 頂部 Hero 區塊 -->
+                <div class="relative animate-fade-in" :key="`header-${activeDay}`">
+                    <div :class="['relative rounded-b-[2.5rem] overflow-hidden shadow-2xl min-h-[240px] flex flex-col justify-end border-b border-white/10', currentDayData.color]">
                         
-                        <div class="bg-white border border-slate-200 p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
-                            <h4 class="text-2xl font-black leading-tight text-slate-900 mb-3">${item.act} ${resTag}</h4>
-                            <p class="text-[14px] text-slate-500 font-bold mb-5 flex items-center gap-1 uppercase tracking-tight leading-snug"><i data-lucide="info" class="w-4 h-4 text-teal-600 flex-shrink-0"></i> ${item.desc}</p>
-                            
-                            <button onclick="goMap('${item.act}')" class="w-full bg-[#0F172A] text-white py-4 rounded-2xl font-black text-base flex items-center justify-center gap-3 shadow-md active:scale-95 mb-6">
-                                <i data-lucide="navigation" size="20"></i> 導航前往 <i data-lucide="external-link" size="16"></i>
-                            </button>
-
-                            <div class="mb-6 overflow-hidden">
-                                <p class="text-[12px] text-slate-400 font-black mb-3 tracking-[0.2em] uppercase flex items-center gap-1">🔗 區域推薦</p>
-                                <div class="flex flex-wrap gap-2">
-                                    ${item.areaRecs.map(rec => `<span class="area-pill-ex2"><i data-lucide="plus" class="w-4 h-4"></i>${rec}</span>`).join('')}
-                                </div>
+                        <!-- 東京專屬紅色標籤 -->
+                        <div class="absolute top-0 right-6 bg-[#da291c] text-white pt-3 pb-3.5 px-3 rounded-b-[16px] shadow-[0_4px_12px_rgba(218,41,28,0.4)] z-20 flex items-center justify-center">
+                            <div class="flex flex-col text-[22px] font-serif font-bold leading-none tracking-widest mt-0.5">
+                                <span>東</span>
+                                <span class="mt-1">京</span>
                             </div>
-
-                            <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100">
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="flex items-center gap-2 text-[12px] font-black text-teal-800 uppercase tracking-widest"><i data-lucide="train-front" size="16"></i> 交通詳解</div>
-                                    <div class="text-[12px] font-black text-white bg-teal-700 px-3 py-1 rounded-md shadow-sm">🎫 票券：${item.ticket}</div>
-                                </div>
-                                <div class="space-y-4 relative pl-4 border-l-2 border-dashed border-slate-200">
-                                    ${item.transSteps.map(s => `<div class="relative flex items-center"><div class="absolute -left-[21px] w-2.5 h-2.5 rounded-full bg-red-600 shadow-sm border border-white"></div><span class="text-sm font-bold text-slate-700">${s}</span></div>`).join('')}
-                                </div>
+                            <div class="text-[10px] tracking-widest font-bold opacity-90 ml-1.5 mt-0.5" style="writing-mode: vertical-rl;">
+                                Tokyo trip
                             </div>
-                        </div>`;
-                    container.appendChild(row);
-                } else {
-                    const row = document.createElement('div');
-                    row.className = "travel-row animate-fade-in";
-                    row.innerHTML = `
-                        <div class="timeline-time text-slate-400 opacity-60 text-sm">${item.time}</div>
-                        <div class="timeline-spine-container">
-                            <div class="timeline-spine-line"></div>
-                            <div class="timeline-dot-travel"></div>
                         </div>
-                        <div class="flex items-center gap-2 py-1 text-slate-600 pl-2">
-                           <div class="text-sm font-bold">${item.act} ➔ <span class="font-black text-slate-800">${item.dest}</span> <span class="bg-slate-100 px-2 py-0.5 rounded-full ml-1 text-xs border border-slate-200 text-slate-600">⏱️ ${item.duration}</span></div>
-                        </div>`;
-                    container.appendChild(row);
-                }
-            });
-            lucide.createIcons();
-        }
 
-        function renderFoodShop() {
-            const con = document.getElementById('foodshop-list');
-            con.innerHTML = mustBuyItems.map(c => `
-                <div class="bg-white border border-slate-200 p-8 rounded-[3rem] shadow-sm">
-                    <h3 class="text-xl font-black mb-6 border-b-2 border-teal-100 pb-3 text-teal-900">${c.cat}</h3>
-                    <div class="space-y-4">
-                        ${c.items.map(i => `
-                            <div class="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                                <div class="flex flex-col">
-                                    <span class="text-base font-black text-slate-900">${i.name}</span>
-                                    <span class="text-xs text-slate-500 font-bold mt-1">${i.desc}</span>
-                                </div>
-                                <button onclick="quickAdd('${i.name}')" class="bg-teal-800 text-white p-3 rounded-xl active:scale-90 shadow-sm"><i data-lucide="plus" size="20"></i></button>
+                        <!-- 底圖照片 -->
+                        <img :src="currentDayData.heroImage" class="absolute inset-0 w-full h-full object-cover opacity-90 transition-opacity duration-500" />
+                        <!-- 漸層遮罩 -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#1a2b22]/90 via-[#1a2b22]/20 to-transparent"></div>
+
+                        <!-- 整合後的資訊文字 -->
+                        <div class="relative p-6 text-white z-10 w-full">
+                            <div class="flex items-center text-[13px] opacity-100 font-bold drop-shadow-md mb-2">
+                                <i class="ph-fill ph-calendar-blank text-base mr-1.5 text-[#d4af37]"></i> {{ currentDayData.date }}
+                                <span class="mx-2 opacity-50">|</span>
+                                <i class="ph-fill ph-sun text-base mr-1.5 text-[#d4af37]"></i> {{ currentDayData.weather }}
                             </div>
-                        `).join('')}
+                            <h2 class="text-[28px] font-serif font-bold tracking-wider mb-3 drop-shadow-lg leading-tight">{{ currentDayData.title }}</h2>
+                            <div class="flex items-center text-[11px] bg-black/30 backdrop-blur-md py-1.5 px-3 rounded-xl w-fit font-bold border border-white/20 shadow-inner">
+                                <i class="ph-bold ph-map-trifold mr-1.5 text-[#d4af37]"></i> {{ currentDayData.routeSummary }}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            `).join('');
-            lucide.createIcons();
-        }
 
-        // --- AA & UTILS ---
-        function addAAExpense() {
-            const name = document.getElementById('aa-item-name').value;
-            const price = parseFloat(document.getElementById('aa-item-price').value);
-            const payer = document.querySelector('input[name="aa-payer"]:checked').value;
-            if(!name || isNaN(price)) return;
-            aaData.push({ name, price, payer });
-            saveAA(); renderAA();
-            document.getElementById('aa-item-name').value = '';
-            document.getElementById('aa-item-price').value = '';
-        }
-        function saveAA() { localStorage.setItem('tokyo_aa', JSON.stringify(aaData)); }
-        function renderAA() {
-            const con = document.getElementById('aa-list');
-            if(!con) return;
-            let tTotal = 0; let cTotal = 0;
-            con.innerHTML = aaData.map((ex, idx) => {
-                if(ex.payer === 'TASS') tTotal += ex.price; else cTotal += ex.price;
-                return `<div class="flex justify-between items-center bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-base">
-                    <span class="font-black ${ex.payer === 'TASS' ? 'text-teal-700' : 'text-orange-600'} w-16">${ex.payer}</span>
-                    <span class="flex-1 font-bold text-slate-800">${ex.name}</span>
-                    <span class="font-black text-slate-900 mr-4 font-mono">¥ ${ex.price.toLocaleString()}</span>
-                    <button onclick="delAA(${idx})" class="text-slate-400 active:text-red-500 transition-colors"><i data-lucide="trash-2" size="20"></i></button>
-                </div>`;
-            }).join('');
-            const total = tTotal + cTotal; const diff = tTotal - (total/2);
-            document.getElementById('aa-final-result').innerText = `總支出 ¥ ${total.toLocaleString()}`;
-            document.getElementById('aa-who-owes').innerHTML = Math.abs(diff) < 1 ? "✅ 目前帳目完美平衡" : diff > 0 ? `川 <span class="text-slate-400 mx-1">需支付</span> TASS：¥ ${Math.round(diff).toLocaleString()}` : `TASS <span class="text-slate-400 mx-1">需支付</span> 川：¥ ${Math.round(Math.abs(diff)).toLocaleString()}`;
-            lucide.createIcons();
-        }
-        function delAA(idx) { aaData.splice(idx,1); saveAA(); renderAA(); }
-        
-        function changeView(v) {
-            ['itinerary', 'foodshop', 'shopping', 'strategy', 'tools'].forEach(view => {
-                document.getElementById(`view-${view}`).classList.toggle('hidden', view !== v);
-                document.getElementById(`nav-${view}`).classList.toggle('tab-active', view === v);
-                document.getElementById(`nav-${view}`).classList.toggle('text-slate-500', view !== v);
-            });
-            window.scrollTo(0,0);
-        }
-        function goMap(loc) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc + ' 東京')}`, '_blank'); }
-        function conv() { 
-            const jInput = document.getElementById('jpy-input');
-            const tOutput = document.getElementById('twd-output');
-            if (jInput && tOutput) {
-                tOutput.innerText = Math.round(jInput.value * 0.215); 
+                <!-- 橫向日期選擇 -->
+                <div class="w-full overflow-x-auto no-scrollbar px-4 pt-5 pb-3 flex space-x-3 snap-x shrink-0 relative z-20">
+                    <button v-for="day in 6" :key="day" @click="activeDay = day" 
+                        :class="['flex-shrink-0 snap-start min-w-[4rem] px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border shadow-sm', 
+                                activeDay === day ? 'bg-white text-[#1a2b22] shadow-[0_0_15px_rgba(255,255,255,0.2)] transform scale-105 border-transparent' : 'bg-white/10 text-white/70 hover:bg-white/20 border-white/5 backdrop-blur-md']">
+                        D{{ day }}
+                    </button>
+                    <div class="flex-shrink-0 w-2"></div>
+                </div>
+
+                <!-- 時間軸設計 -->
+                <div class="relative pb-6 pl-4 pr-4 mt-2">
+                    <div class="absolute left-[31px] top-6 bottom-4 w-[2px] bg-[#8b9b82]/40 z-0"></div>
+                    <div class="space-y-5">
+                        <div v-for="(event, index) in currentDayData.events" :key="event.id" class="flex items-start relative z-10 animate-fade-in" :style="{ animationDelay: `${index * 0.05}s` }">
+                            <div class="w-[30px] shrink-0 flex justify-center pt-[20px]">
+                                <div class="w-3.5 h-3.5 rounded-full bg-[#d4af37] border-[3px] border-[#1a2b22] shadow-[0_0_0_2px_rgba(212,175,55,0.3)] relative z-10"></div>
+                            </div>
+                            
+                            <div class="flex-1 bg-[#f4f1eb] rounded-[1.25rem] p-4 shadow-lg ml-2 mb-1 border border-white/5 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1.5 h-full bg-[#8b9b82]/40"></div>
+                                <div class="flex justify-between items-center mb-2 pl-1">
+                                    <div class="flex items-center text-[#c25934] font-bold text-sm">
+                                        <i class="ph-fill ph-clock text-base mr-1.5"></i> {{ event.time }}
+                                        <span v-if="event.duration" class="ml-2 text-[10px] bg-[#c25934]/15 px-2 py-0.5 rounded-md">{{ event.duration }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span v-if="event.ticketBadge" class="bg-[#8b9b82] text-white text-[10px] px-2 py-1 rounded shadow-sm font-bold flex items-center shrink-0">
+                                            <i class="ph-bold ph-ticket mr-1 text-[11px]"></i>72hr券
+                                        </span>
+                                        <span v-if="event.badge" class="bg-red-500/90 text-white text-[10px] px-2 py-1 rounded shadow-sm font-bold shrink-0">
+                                            {{ event.badge }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <h3 class="text-[17px] font-bold text-[#14221a] pl-1 leading-tight mb-2.5">{{ event.title }}</h3>
+                                
+                                <div class="flex items-center justify-between text-sm text-gray-700 mb-3 font-medium bg-[#e8e4db] p-2 rounded-xl border border-black/5 ml-1">
+                                    <div class="flex flex-col flex-1 pr-2 justify-center">
+                                        <div class="flex items-center flex-wrap">
+                                            <i :class="[getIconClass(event.type), 'text-lg mr-1.5 shrink-0 flex items-center']"></i>
+                                            <span class="font-bold text-[#1a2b22] leading-snug flex items-center mr-1.5">{{ event.location }}</span>
+                                            <span v-if="event.inlineDetail" class="text-[11px] text-[#c25934] font-bold" v-html="event.inlineDetail"></span>
+                                        </div>
+                                    </div>
+                                    <a v-if="!event.noNav" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.location.replace(/<[^>]*>?/gm, ''))" target="_blank" class="bg-[#1a2b22] text-white text-[10px] px-3 py-2 rounded-lg shadow-md hover:bg-[#c25934] transition-colors shrink-0 flex items-center font-bold tracking-wider">
+                                        <i class="ph-bold ph-navigation-arrow mr-1 text-sm"></i>導航
+                                    </a>
+                                </div>
+
+                                <div v-if="event.important" class="ml-1 mb-2 bg-[#3a5867]/10 text-[#3a5867] p-2.5 rounded-xl text-xs font-bold flex items-center border border-[#3a5867]/20 shadow-sm">
+                                    <i class="ph-fill ph-info text-base mr-1.5 flex-shrink-0 flex items-center"></i>
+                                    <span class="leading-snug">{{ event.important }}</span>
+                                </div>
+
+                                <p v-if="event.details" class="pl-1 mt-1 text-[13px] text-gray-600 leading-relaxed font-medium" v-html="event.details"></p>
+                                <p v-if="event.notes" class="pl-1 mt-1.5 text-[11px] text-gray-500 italic flex items-start leading-relaxed">
+                                    <i class="ph-bold ph-caret-right mt-1 mr-1 shrink-0"></i><span v-html="event.notes"></span>
+                                </p>
+
+                                <div v-if="event.transportDetails" class="mt-3 pl-1">
+                                    <button @click="toggleDetails(event.id)" class="flex items-center text-xs font-bold text-[#2d4a3a] bg-[#2d4a3a]/10 px-3 py-1.5 rounded-lg transition-all active:scale-95 border border-[#2d4a3a]/10">
+                                        <i class="ph-fill ph-train text-sm mr-1.5"></i> 交通詳解 
+                                        <i :class="['ph-bold text-xs ml-1 transition-transform', activeDetails.includes(event.id) ? 'ph-caret-up' : 'ph-caret-down']"></i>
+                                    </button>
+                                    <div v-if="activeDetails.includes(event.id)" class="mt-3 p-3.5 bg-white rounded-xl text-sm shadow-inner border border-gray-100 animate-fade-in">
+                                        <div class="flex items-center text-[#2d4a3a] font-bold mb-1.5 text-[13px]">
+                                            <div class="w-2 h-2 rounded-full bg-[#2d4a3a] mr-2 shrink-0"></div>{{ event.transportDetails.method }}
+                                        </div>
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <p class="text-gray-600 ml-4 text-xs font-medium leading-relaxed">{{ event.transportDetails.route }}</p>
+                                            <span v-if="event.transportDetails.duration" class="text-[10px] font-bold bg-[#c25934]/10 text-[#c25934] px-2 py-0.5 rounded-md shrink-0 ml-2 border border-[#c25934]/10 flex items-center">
+                                                <i class="ph-bold ph-hourglass-simple mr-0.5"></i>{{ event.transportDetails.duration }}
+                                            </span>
+                                        </div>
+                                        <p v-if="event.transportDetails.walking" class="text-gray-500 ml-4 mb-2 text-xs flex items-center font-medium">
+                                            <i class="ph-fill ph-sneaker text-sm mr-1.5 text-gray-400"></i> {{ event.transportDetails.walking }}
+                                        </p>
+                                        <div v-if="event.transportDetails.note" class="ml-4 mt-2 p-2.5 bg-[#8b9b82]/10 text-[#2d4a3a] text-[11px] rounded-lg border border-[#8b9b82]/30 flex items-start font-bold leading-relaxed">
+                                            <span class="mr-1.5 text-sm">💡</span> {{ event.transportDetails.note }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 推薦 (Recommendations) -->
+            <div v-else-if="currentTab === 'recommendations'" class="pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]">
+                <h2 class="px-5 text-2xl font-serif font-bold text-white mb-5 pb-2">探索清單名鑑</h2>
+                
+                <div class="w-full px-5 pb-2 mb-4">
+                    <div class="flex flex-wrap gap-2.5">
+                        <button v-for="cat in recCategories" :key="cat" @click="activeRecTab = cat"
+                            :class="['px-4 py-2 rounded-full text-[13px] font-bold transition-all shadow-sm', activeRecTab === cat ? 'bg-[#d4af37] text-[#14221a]' : 'bg-white/10 text-white/80 border border-white/10 hover:bg-white/20']">
+                            {{ cat }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="px-5 space-y-3">
+                    <div v-for="(item, idx) in RECOMMENDATIONS[activeRecTab]" :key="idx" class="bg-[#f4f1eb] p-4 rounded-2xl shadow flex justify-between items-center group hover:bg-white transition-colors">
+                        <div class="flex items-center w-full pr-2">
+                            <div :class="['w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0', item.type === 'food' ? 'bg-[#8b9b82]/15' : item.type === 'souvenir' ? 'bg-pink-100' : 'bg-[#c25934]/10']">
+                                <i v-if="item.type === 'food'" class="ph-fill ph-fork-knife text-xl text-[#2d4a3a]"></i>
+                                <i v-else-if="item.type === 'souvenir'" class="ph-fill ph-gift text-xl text-pink-600"></i>
+                                <i v-else class="ph-fill ph-tote text-xl text-[#c25934]"></i>
+                            </div>
+                            <div class="overflow-hidden flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-bold text-[#14221a] text-sm mb-0.5 truncate" v-html="item.name"></h4>
+                                </div>
+                                <p class="text-xs text-gray-500 font-medium truncate">{{ item.note }}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end flex-shrink-0 ml-1 space-y-1">
+                            <span class="text-[#c25934] font-bold text-[11px] bg-[#c25934]/10 px-2 py-1 rounded-lg flex items-center shadow-sm">
+                                <i class="ph-fill ph-star mr-0.5 text-[#d4af37]"></i> {{ item.rating }}
+                            </span>
+                            <a v-if="item.type === 'food'" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name.replace(/<[^>]*>?/gm, ''))" target="_blank" class="bg-[#2d4a3a] text-white text-[9px] px-2 py-1 rounded-md shadow-sm hover:bg-[#c25934] transition-colors flex items-center">
+                                <i class="ph-bold ph-navigation-arrow mr-1"></i>導航
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 戰略 (Strategy) -->
+            <div v-else-if="currentTab === 'strategy'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]">
+                <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">行軍戰略地圖</h2>
+
+                <div class="bg-gradient-to-br from-[#c25934] to-[#a34727] p-5 rounded-[2rem] shadow-xl mb-6 text-white relative overflow-hidden border border-white/10">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
+                    <h3 class="font-bold text-lg mb-4 flex items-center"><i class="ph-fill ph-alarm text-2xl mr-2 text-[#d4af37]"></i> 搶票與預約確認</h3>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start bg-black/20 p-4 rounded-2xl border border-white/5">
+                            <div class="bg-[#d4af37] text-black p-1.5 rounded-lg mr-3 shadow-md"><i class="ph-bold ph-ticket text-lg"></i></div>
+                            <div>
+                                <p class="font-bold text-[15px]">SHIBUYA SKY 夜景</p>
+                                <p class="text-white/90 text-xs mt-1.5 font-medium leading-relaxed">務必設定鬧鐘於 <span class="bg-red-500/90 px-1.5 py-0.5 rounded shadow-sm text-white">4/25 23:00</span> 搶購 5/10 門票！</p>
+                            </div>
+                        </li>
+                        
+                        <li class="flex items-center text-white font-medium pl-1 bg-[#8b9b82]/20 p-3 rounded-2xl border border-[#8b9b82]/30">
+                            <div class="flex items-center">
+                                <i class="ph-fill ph-check-circle text-xl mr-2 text-[#8b9b82] shrink-0"></i> 
+                                <span>立吉炸串 - 新宿 (已預約 19:00)</span>
+                            </div>
+                        </li>
+
+                        <li class="flex items-center text-white font-medium pl-1 bg-[#8b9b82]/20 p-3 rounded-2xl border border-[#8b9b82]/30">
+                            <div class="flex items-center">
+                                <i class="ph-fill ph-check-circle text-xl mr-2 text-[#8b9b82] shrink-0"></i> 
+                                <span>敘敘苑 - 澀谷店 (已預約 13:00)</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6">
+                    <h3 class="font-bold text-[#14221a] text-lg mb-3 flex items-center">
+                        <i class="ph-fill ph-map-trifold text-xl mr-2 text-[#2d4a3a]"></i> 表參道不迷路走法
+                    </h3>
+                    <p class="text-xs text-gray-600 mb-5 bg-gray-200/80 p-3 rounded-xl font-medium border-l-4 border-[#2d4a3a]">
+                        核心原則：只走一條「表參道主幹」 + 一小段支線
+                    </p>
+                    <div class="relative pl-5 border-l-[3px] border-[#8b9b82]/50 space-y-6 text-sm text-[#2d4a3a] font-bold pb-2">
+                        <div class="relative"><div class="absolute -left-[29px] top-1 w-4 h-4 bg-[#c25934] rounded-full border-[3px] border-[#f4f1eb] shadow-sm"></div><p class="text-[15px]">起點：Blue Bottle 原宿店</p></div>
+                        <div class="relative"><div class="absolute -left-[29px] top-1 w-4 h-4 bg-[#8b9b82] rounded-full border-[3px] border-[#f4f1eb] shadow-sm"></div><p>1. HOKA (原宿/表參道)</p></div>
+                        <div class="relative"><div class="absolute -left-[29px] top-1 w-4 h-4 bg-[#8b9b82] rounded-full border-[3px] border-[#f4f1eb] shadow-sm"></div><p>2. On (附近同區)</p></div>
+                        <div class="relative"><div class="absolute -left-[29px] top-1 w-4 h-4 bg-[#8b9b82] rounded-full border-[3px] border-[#f4f1eb] shadow-sm"></div><p>3. ASICS (旗艦店)</p></div>
+                        <div class="relative"><div class="absolute -left-[29px] top-1 w-4 h-4 bg-[#8b9b82] rounded-full border-[3px] border-[#f4f1eb] shadow-sm"></div><p>4. Mizuno (表參道或青山)</p></div>
+                        <div class="relative"><div class="absolute -left-[29px] top-1 w-4 h-4 bg-[#2d4a3a] rounded-full border-[3px] border-[#f4f1eb] shadow-sm"></div><p>5. (延伸) KEEN</p></div>
+                    </div>
+                </div>
+
+                <!-- 旅遊必備 APP -->
+                <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6 border border-white/5">
+                    <h3 class="font-bold text-[#14221a] text-lg mb-4 flex items-center">
+                        <i class="ph-fill ph-device-mobile text-xl mr-2 text-[#2d4a3a]"></i> 日本旅遊必備 APP
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div v-for="app in recommendedApps" :key="app.name" class="bg-white p-3 pt-4 rounded-2xl shadow-sm flex flex-col items-center text-center border border-black/5 relative overflow-hidden h-full">
+                            <div :class="['w-[48px] h-[48px] rounded-[14px] flex items-center justify-center mb-2 shadow-inner group-hover:scale-105 transition-transform border border-black/5', app.fallbackBg]">
+                                <i :class="['text-2xl', app.fallbackIcon]"></i>
+                            </div>
+                            
+                            <span class="font-bold text-[#1a2b22] text-[13px] mb-1 leading-tight">{{ app.name }}</span>
+                            <span class="text-[9px] text-gray-500 leading-tight mb-3">{{ app.desc }}</span>
+                            
+                            <!-- 底部滿版按鈕分開 iOS 與 Android -->
+                            <div class="mt-auto w-full flex gap-1.5 z-10">
+                                <a :href="app.iosLink" target="_blank" class="flex-1 text-[10px] py-1.5 rounded-md font-bold bg-blue-50 text-blue-600 border border-blue-100 tracking-wider flex items-center justify-center hover:bg-blue-100 transition-colors">iOS</a>
+                                <a :href="app.androidLink" target="_blank" class="flex-1 text-[10px] py-1.5 rounded-md font-bold bg-green-50 text-green-600 border border-green-100 tracking-wider flex items-center justify-center hover:bg-green-100 transition-colors">Android</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 購物 (Shopping) -->
+            <div v-else-if="currentTab === 'shopping'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in flex flex-col no-scrollbar relative bg-[#1a2b22]">
+                <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">戰利品清單</h2>
+
+                <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
+                    <h3 class="font-bold text-[#2d4a3a] mb-3 text-sm flex items-center"><i class="ph-bold ph-plus-circle text-lg mr-1.5 text-[#c25934]"></i> 新增採買目標</h3>
+                    <div class="space-y-3">
+                        <input type="text" placeholder="商品名稱" v-model="newItem.name" class="w-full bg-white px-4 py-3 rounded-xl text-sm border-none outline-none focus:ring-2 focus:ring-[#8b9b82] font-medium shadow-inner" />
+                        <div class="flex space-x-3">
+                            <input type="number" placeholder="數量" min="1" v-model="newItem.qty" class="w-1/3 bg-white px-4 py-3 rounded-xl text-sm border-none outline-none focus:ring-2 focus:ring-[#8b9b82] font-medium shadow-inner" />
+                            <input type="text" placeholder="備註 (去哪買)" v-model="newItem.note" class="w-2/3 bg-white px-4 py-3 rounded-xl text-sm border-none outline-none focus:ring-2 focus:ring-[#8b9b82] font-medium shadow-inner" />
+                        </div>
+                        <button @click="addShoppingItem" class="w-full bg-[#2d4a3a] text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition-transform tracking-wider mt-2">
+                            建立目標
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 space-y-2.5">
+                    <div v-for="item in shoppingItems" :key="item.id" 
+                        :class="['p-4 rounded-2xl flex items-center justify-between transition-all border', item.checked ? 'bg-white/10 opacity-50 border-white/5' : 'bg-[#f4f1eb] shadow-sm border-transparent']">
+                        <div class="flex items-center overflow-hidden w-full cursor-pointer pr-2" @click="item.checked = !item.checked">
+                            <div class="mr-3.5 flex-shrink-0">
+                                <i v-if="item.checked" class="ph-fill ph-check-circle text-3xl text-[#8b9b82]"></i>
+                                <i v-else class="ph ph-circle text-3xl text-gray-300"></i>
+                            </div>
+                            <div class="truncate w-full pr-2">
+                                <div class="flex justify-between items-center w-full">
+                                    <p :class="['font-bold text-sm truncate', item.checked ? 'text-white line-through' : 'text-[#14221a]']">{{ item.name }}</p>
+                                    <span :class="['text-xs font-bold px-2 py-0.5 rounded-md flex-shrink-0 ml-2', item.checked ? 'bg-white/20 text-white' : 'bg-[#c25934]/15 text-[#c25934]']">x{{ item.qty }}</span>
+                                </div>
+                                <p v-if="item.note" :class="['text-xs truncate mt-1 font-medium', item.checked ? 'text-white/50' : 'text-gray-500']">{{ item.note }}</p>
+                            </div>
+                        </div>
+                        <button @click.stop="removeShoppingItem(item.id)" class="shrink-0 ml-2 p-2 text-gray-400 hover:text-red-500 transition-colors">
+                            <i class="ph-bold ph-trash text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. 工具 (Tools) -->
+            <div v-else-if="currentTab === 'tools'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]">
+                <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">旅行工具箱</h2>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-[#4facfe] to-[#00f2fe] p-4 rounded-3xl shadow-lg text-white flex flex-col justify-between h-32 relative overflow-hidden">
+                        <i class="ph-fill ph-cloud-sun text-[5.5rem] absolute -right-2 -top-2 text-white/25"></i>
+                        <div class="relative z-10">
+                            <p class="text-xs font-bold tracking-wider opacity-90 drop-shadow">TOKYO</p>
+                            <h3 class="text-4xl font-bold mt-0.5 drop-shadow">22°</h3>
+                        </div>
+                        <p class="text-[11px] font-medium relative z-10">降雨機率 10%</p>
+                    </div>
+
+                    <a href="https://translate.google.com/?hl=zh-TW&sl=zh-TW&tl=ja&op=translate" target="_blank" rel="noopener noreferrer" class="bg-[#f4f1eb] p-4 rounded-3xl shadow-lg text-[#2d4a3a] flex flex-col justify-center items-center h-32 active:scale-95 transition-transform group border border-white/5">
+                        <div class="w-12 h-12 bg-[#2d4a3a]/10 group-hover:bg-[#2d4a3a]/20 transition-colors rounded-full flex items-center justify-center mb-2">
+                            <i class="ph-fill ph-translate text-2xl text-[#2d4a3a]"></i>
+                        </div>
+                        <span class="font-bold text-sm">Google 翻譯</span>
+                    </a>
+                </div>
+
+                <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
+                    <h3 class="font-bold text-[#14221a] mb-4 flex items-center text-sm"><i class="ph-fill ph-currency-circle-dollar text-xl mr-1.5 text-[#8b9b82]"></i> 快速匯率換算</h3>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-1 relative">
+                            <span class="absolute left-3 top-3 text-gray-500 font-bold text-sm">¥</span>
+                            <input type="number" v-model="jpy" class="w-full bg-white pl-8 pr-4 py-3 rounded-xl text-sm outline-none shadow-inner font-medium" placeholder="日幣" />
+                        </div>
+                        <div class="text-gray-400 font-bold"><i class="ph-bold ph-arrow-right text-xl"></i></div>
+                        <div class="flex-1 bg-white px-4 py-3 rounded-xl shadow-inner text-[#c25934] font-bold text-sm flex items-center justify-between">
+                            <span>NT$</span>
+                            <span>{{ jpyTwdValue }}</span>
+                        </div>
+                    </div>
+                    <p class="text-right text-[10px] text-gray-400 mt-2 font-medium">參考匯率: 1 JPY = {{ exchangeRate }} TWD</p>
+                </div>
+
+                <div class="bg-gradient-to-b from-[#2d4a3a] to-[#1a2b22] p-5 rounded-3xl shadow-xl text-white border border-white/10 mb-6">
+                    <h3 class="font-bold mb-4 flex items-center text-[#d4af37] text-lg">
+                        <i class="ph-fill ph-calculator text-2xl mr-2"></i> 專屬 AA 記帳本
+                    </h3>
+                    
+                    <div class="bg-white/5 p-4 rounded-2xl mb-5 border border-white/10">
+                        <input type="text" placeholder="項目名稱" v-model="expName" class="w-full bg-white/10 px-4 py-3 rounded-xl text-white text-sm outline-none placeholder-white/30 font-medium mb-3 border border-transparent focus:border-[#d4af37]/50" />
+                        <div class="flex space-x-2 mb-3">
+                            <input type="number" placeholder="輸入金額" v-model="expAmount" class="flex-1 bg-white/10 px-4 py-3 rounded-xl text-white text-sm outline-none placeholder-white/30 font-bold border border-transparent focus:border-[#d4af37]/50" />
+                            <div class="flex bg-white/10 rounded-xl p-1 w-24">
+                                <button @click="expCurr = 'JPY'" :class="['flex-1 text-xs font-bold rounded-lg transition-colors', expCurr === 'JPY' ? 'bg-white text-[#1a2b22]' : 'text-white/60']">¥</button>
+                                <button @click="expCurr = 'TWD'" :class="['flex-1 text-xs font-bold rounded-lg transition-colors', expCurr === 'TWD' ? 'bg-white text-[#1a2b22]' : 'text-white/60']">$</button>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 items-center">
+                            <span class="text-xs text-white/60 font-medium mr-1 whitespace-nowrap">代墊：</span>
+                            <div class="flex bg-white/10 rounded-xl p-1 flex-1">
+                                <button @click="expPayer = 'Tass'" :class="['flex-1 text-xs font-bold py-2 rounded-lg transition-colors', expPayer === 'Tass' ? 'bg-[#c25934] text-white' : 'text-white/60']">Tass</button>
+                                <button @click="expPayer = '川'" :class="['flex-1 text-xs font-bold py-2 rounded-lg transition-colors', expPayer === '川' ? 'bg-[#c25934] text-white' : 'text-white/60']">川</button>
+                            </div>
+                            <button @click="addExpense" class="bg-[#d4af37] text-[#14221a] px-4 py-2 rounded-xl font-bold text-sm active:scale-95 transition-transform ml-2 shadow-md">新增</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 max-h-48 overflow-y-auto no-scrollbar pr-1 mb-4">
+                        <p v-if="expenses.length === 0" class="text-center text-white/30 text-xs py-4">目前尚無帳目</p>
+                        <div v-for="exp in expenses" :key="exp.id" class="bg-white/10 p-3 rounded-xl flex justify-between items-center border border-white/5 group">
+                            <div class="flex items-center">
+                                <span class="w-8 h-8 rounded-full bg-[#c25934]/20 flex items-center justify-center text-[#c25934] font-bold text-[10px] mr-3 shrink-0">{{ exp.payer }}</span>
+                                <p class="text-sm font-bold text-white/90 truncate max-w-[120px]">{{ exp.name }}</p>
+                            </div>
+                            <div class="flex items-center space-x-3 shrink-0">
+                                <p class="font-bold text-[#d4af37] text-sm">{{ exp.curr === 'JPY' ? '¥' : '$' }}{{ exp.amount }}</p>
+                                <button @click="removeExpense(exp.id)" class="text-white/20 hover:text-red-400 transition-colors">
+                                    <i class="ph-bold ph-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="expenses.length > 0 && settlement" class="bg-white p-4 rounded-xl shadow-lg mt-2 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-[#d4af37]"></div>
+                        <p class="text-center text-[#14221a] text-[10px] font-bold mb-1 tracking-widest text-gray-500">最終結算 (統一換算台幣)</p>
+                        <div v-if="settlement.amount > 0" class="text-center">
+                            <p class="text-[#14221a] font-medium text-sm mb-0.5">
+                                <span class="font-bold text-[#c25934]">{{ settlement.owePerson }}</span> 需給 <span class="font-bold">{{ settlement.oweTo }}</span>
+                            </p>
+                            <p class="text-3xl font-black text-[#2d4a3a]">NT$ {{ settlement.amount }}</p>
+                        </div>
+                        <p v-else class="text-center text-[#2d4a3a] font-bold py-2">目前帳目已平分 🎉</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 底部導覽列 -->
+        <div class="absolute bottom-0 left-0 right-0 bg-[#1a2b22]/95 backdrop-blur-xl pb-safe pt-2 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 border-t border-white/5">
+            <div class="flex justify-around items-center px-1">
+                <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
+                    :class="['flex flex-col items-center justify-center w-16 transition-all duration-400 ease-out', currentTab === tab.id ? 'text-[#d4af37] -translate-y-2' : 'text-white/40 hover:text-white/70']">
+                    <div :class="['p-2.5 rounded-2xl mb-1 transition-colors', currentTab === tab.id ? 'bg-[#d4af37]/15 shadow-inner' : '']">
+                        <i :class="[(currentTab === tab.id ? 'ph-fill' : 'ph'), tab.icon, 'text-2xl']"></i>
+                    </div>
+                    <span :class="['text-[10px] tracking-widest transition-all', currentTab === tab.id ? 'font-bold opacity-100' : 'font-medium opacity-0 transform translate-y-2']">
+                        {{ tab.label }}
+                    </span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 應用程式邏輯 (Vue 3) -->
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const currentTab = ref('itinerary');
+                const tabs = [
+                    { id: 'itinerary', icon: 'ph-calendar-blank', label: '行程' },
+                    { id: 'recommendations', icon: 'ph-list-checks', label: '推薦' },
+                    { id: 'strategy', icon: 'ph-map-trifold', label: '戰略' },
+                    { id: 'shopping', icon: 'ph-tote', label: '購物' },
+                    { id: 'tools', icon: 'ph-wrench', label: '工具' }
+                ];
+
+                const activeDay = ref(1);
+                const activeDetails = ref([]);
+                
+                // --- 每日圖片與資料設定 ---
+                const ITINERARY = {
+                    1: { 
+                        date: "5/7 (四)", title: "上野著陸・愜意探路", routeSummary: "高雄 ✈️ 成田 ➡ 東京上野", weather: "19°C~22°C | 晴時多雲", 
+                        color: "from-[#788a6d] to-[#5a6b50]", 
+                        heroImage: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
+                        events: [
+                            { id: "d1-1", time: "12:55 - 17:35", title: "高雄 ✈️ 成田 (CI 126)", location: "小港機場 T1 → 成田 T2", type: "flight", duration: "3h40m", notes: "請提早抵達機場報到", noNav: true },
+                            { id: "d1-2", time: "17:45 - 19:00", title: "抵達東京・通關+拿行李", location: "成田機場 T2", type: "info", important: "預先準備 VJW QR code 截圖" },
+                            { id: "d1-3", time: "19:00 - 20:30", title: "前往飯店 (APA Hotel)", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", duration: "44m", transportDetails: { method: "搭乘 Skyliner", route: "成田機場 T2 → 京成上野站", walking: "步行 2 分鐘至飯店", note: "如果時間允許，先登記入住並放行李。可先劃回程 Skyliner。" } },
+                            { id: "d1-4", time: "20:30 - 21:40", title: "晚餐：肉屋の台所", location: "肉屋の台所 上野店", inlineDetail: "(已預約 20:30)", details: "A5和牛燒肉吃到飽", type: "food" },
+                            { id: "d1-5", time: "21:40 - 23:00", title: "阿美橫町閒逛", location: "阿美橫町", type: "shopping", details: "松本清 (23:00打烊) / 唐吉訶德 (01:00打烊)", notes: "藥妝查詢松本清價格" },
+                            { id: "d1-6", time: "23:00 - 23:10", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", transportDetails: { method: "步行", route: "從阿美橫町步行回飯店", walking: "約 5-10 分鐘" } }
+                    ]},
+                    2: { 
+                        date: "5/8 (五)", title: "淺草文化・登塔望遠", routeSummary: "淺草寺 ➡ 晴空塔 ➡ 明治神宮 ➡ 新宿", weather: "20°C~25°C | 晴朗", 
+                        color: "from-[#c25934] to-[#9a4528]", 
+                        heroImage: "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=800&q=80",
+                        events: [
+                            { id: "d2-1", time: "08:00 - 08:30", title: "出門 & 早餐", location: "LAWSON", type: "food", details: "推薦必喝：焙茶厚乳拿鐵 👍", badge: "🎟️ 開通 72hr 券" },
+                            { id: "d2-2", time: "09:00 - 11:20", title: "淺草寺巡禮", location: "淺草寺", type: "spot", duration: "3h", details: "雷門 → 五重塔 → 仲見世 → 逛街", notes: "吉備糰子、淺草絲綢布丁、吃メンチ炸肉餅、壽壽喜園抹茶", ticketBadge: true, transportDetails: { method: "東京地下鐵", route: "上野站 ➡ 淺草站 (銀座線)", duration: "約 5 分鐘", note: "可用 72hr 地鐵券" } },
+                            { id: "d2-3", time: "11:30 - 13:00", title: "午餐：淺草今半", location: "淺草今半 國際通本店", type: "food", details: "和牛壽喜燒 / 百年牛丼" },
+                            { id: "d2-4", time: "13:00 - 14:00", title: "晴空塔展望", location: "晴空塔", type: "spot", transportDetails: { method: "都營淺草線 / 東武線", route: "淺草站 → 押上站", duration: "約 9 分鐘", note: "電車行進中也可以拍照" }, ticketBadge: true },
+                            { id: "d2-5", time: "15:00 - 16:30", title: "明治神宮", location: "明治神宮", type: "spot", duration: "1.5h", details: "大鳥居、本殿、奉獻酒樽<br>CAFÉ Mori no Terrace、FLOTO冰淇淋店 (表參道原宿方向)", transportDetails: { method: "東京地下鐵", route: "押上站 ➡ 表參道 ➡ 原宿站", duration: "約 40 分鐘", note: "全程可使用 72hr 地鐵券" }, ticketBadge: true },
+                            { id: "d2-6", time: "17:00 - 19:30", title: "新宿逛街", location: "Windsor羽球", navLocation: "Windsor Racket Shop Shinjuku", type: "shopping", details: "3D巨大三色貓 / 哥吉拉頭", notes: "OS drug / Windsor羽球 皆營業至19:30。藥妝於今日在OS買入", transportDetails: { method: "東京地下鐵", route: "原宿站 ➡ 新宿三丁目", duration: "約 20 分鐘", note: "可用 72hr 地鐵券" }, ticketBadge: true },
+                            { id: "d2-7", time: "19:30 - 20:30", title: "晚餐：Negishi 烤牛舌", location: "Negishi 新宿", type: "food", details: "新宿有很多分店，可找沒人排隊的吃即可" },
+                            { id: "d2-8", time: "20:30 - 22:30", title: "新宿夜間巡禮", location: "歌舞伎町", type: "spot", details: "Uniqlo 旗艦店 / ALPEN 球鞋 <br> GU 旗艦店", notes: "GU 營業至 22:00 (最後一逛)<br>無視歌舞伎町穿著西裝的男子，遇到推銷直接無視快步走過" },
+                            { id: "d2-9", time: "22:30 - 23:00", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", transportDetails: { method: "大江戶線", route: "新宿 ➡ 上野", duration: "30m", note: "宵夜：一蘭拉麵上野店" } }
+                    ]},
+                    3: { 
+                        date: "5/9 (六)", title: "爆買血拼・銀座巡禮", routeSummary: "南町田 ➡ 銀座 ➡ 秋葉原", weather: "21°C~26°C | 多雲轉晴", 
+                        color: "from-[#d4af37] to-[#b08e26]", 
+                        heroImage: "https://images.unsplash.com/photo-1554797589-7241bb691973?w=800&q=80", 
+                        events: [
+                            { id: "d3-1", time: "09:00 - 14:30", title: "南町田 Outlet", location: "南町田 GRAND BERRY 公園", type: "shopping", transportDetails: { method: "地下鐵 + 東急田園都市線", route: "上野 ➡ 表參道 ➡ 南町田", duration: "約 1.5h", note: "需確保路線可使用72hr地鐵券" }, ticketBadge: true },
+                            { id: "d3-2", time: "16:00 - 18:00", title: "銀座逛街", location: "銀座 SIX", type: "shopping", details: "loft, <span class='text-[#da291c] font-black'>HIIRAGI抹茶冰</span>", notes: "精品策略: 去三越/松屋百貨拿 5% Guest Card", transportDetails: { method: "東急田園都市線 ➡ 銀座線", route: "南町田 ➡ 澀谷轉乘 ➡ 銀座站", duration: "約 45 分鐘" } },
+                            { id: "d3-3", time: "18:00 - 19:30", title: "晚餐：牛かつ もと村", location: "牛かつ もと村 秋葉原店", type: "food", transportDetails: { method: "東京地下鐵", route: "銀座站 ➡ 神田站", duration: "12m" } },
+                            { id: "d3-4", time: "19:30 - 22:00", title: "秋葉原探險", location: "秋葉原", type: "spot" },
+                            { id: "d3-5", time: "22:00 - 22:15", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", transportDetails: { method: "東京地下鐵", route: "末廣町 ➡ 上野", duration: "5m" }, ticketBadge: true }
+                    ]},
+                    4: { 
+                        date: "5/10 (日)", title: "潮男聖地・璀璨夜景", routeSummary: "上野 ➡ 東京鐵塔 ➡ 表參道 ➡ SHIBUYA SKY", weather: "22°C~27°C | 晴朗", 
+                        color: "from-[#5b7c8c] to-[#3a5867]", 
+                        heroImage: "https://images.unsplash.com/photo-1542931287-023b922fa89b?w=800&q=80", 
+                        events: [
+                            { id: "d4-1", time: "08:00 - 09:15", title: "上野出發", location: "上野", type: "info", noNav: true },
+                            { id: "d4-2", time: "09:15 - 10:00", title: "東京鐵塔", location: "東京鐵塔", details: "(存在google地圖中)", type: "spot", ticketBadge: true, transportDetails: { method: "東京地下鐵", route: "上野 ➡ 神谷町", duration: "27m", note: "全程可用 72hr 券" } },
+                            { id: "d4-3", time: "10:30 - 11:00", title: "HUMAN MADE 咖啡", location: "HUMAN MADE OFFLINE STORE", type: "food", transportDetails: { method: "東京地下鐵", route: "神谷町 ➡ 表參道", duration: "9m" } },
+                            { id: "d4-4", time: "11:00 - 13:00", title: "原宿/表參道 潮牌", location: "表參道", type: "shopping" },
+                            { id: "d4-5", time: "13:00 - 14:30", title: "午餐：敘敘苑", location: "敘敘苑 澀谷店", inlineDetail: "(已預約 13:00)", type: "food" },
+                            { id: "d4-6", time: "14:30 - 18:00", title: "澀谷逛街", location: "澀谷 貓街", type: "shopping" },
+                            { id: "d4-7", time: "18:00 - 20:00", title: "SHIBUYA SKY", location: "SHIBUYA SKY", type: "spot" },
+                            { id: "d4-8", time: "20:00 - 21:30", title: "晚餐：美登利總本店", location: "活美登利 澀谷西武店", type: "food" },
+                            { id: "d4-9", time: "21:30 - 22:10", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", transportDetails: { method: "銀座線", route: "澀谷 ➡ 上野", duration: "28m" }, ticketBadge: true }
+                    ]},
+                    5: { 
+                        date: "5/11 (一)", title: "富士山下・尋找美景", routeSummary: "東京 ➡ 富士山河口湖 ➡ 新宿", weather: "15°C~20°C | 晴朗有雲", 
+                        color: "from-[#8c7a6b] to-[#6b5a4b]", 
+                        heroImage: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=800&q=80", 
+                        events: [
+                            { id: "d5-1", time: "06:40 - 07:20", title: "東京站集合", location: "東京站丸之內北口", type: "transport", transportDetails: { method: "JR 山手線", route: "上野 ➡ 東京車站", duration: "7m" } },
+                            { id: "d5-2", time: "07:20 - 18:30", title: "河口湖 一日遊", location: "河口湖", type: "spot", duration: "11h", noNav: true },
+                            { id: "d5-3", time: "19:00 - 20:00", title: "晚餐：立吉 炸串", location: "新宿立吉", inlineDetail: "(已預約 19:00)", type: "food" },
+                            { id: "d5-4", time: "20:00 - 22:00", title: "新宿最終掃貨", location: "新宿車站", type: "shopping", transportDetails: { method: "JR 山手線", route: "新宿 ➡ 上野", duration: "25m", note: "掃貨完直接搭車回飯店" } },
+                            { id: "d5-5", time: "22:00 - 22:10", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", noNav: true }
+                    ]},
+                    6: { 
+                        date: "5/12 (二)", title: "滿載而歸・期待下次", routeSummary: "上野 ➡ 成田機場 ➡ 台灣", weather: "20°C~24°C | 多雲", 
+                        color: "from-[#2d4a3a] to-[#1a2b22]", 
+                        heroImage: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80", 
+                        events: [
+                            { id: "d6-1", time: "08:30 - 10:00", title: "飯店 Check out", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", noNav: true },
+                            { id: "d6-2", time: "11:00 - 13:35", title: "前往機場 & 搭機", location: "成田機場 T2", type: "flight", important: "10:20 前須搭上 Skyliner" }
+                    ]}
+                };
+
+                const currentDayData = computed(() => ITINERARY[activeDay.value]);
+                const toggleDetails = (id) => {
+                    if (activeDetails.value.includes(id)) {
+                        activeDetails.value = activeDetails.value.filter(i => i !== id);
+                    } else {
+                        activeDetails.value.push(id);
+                    }
+                };
+
+                const getIconClass = (type) => {
+                    switch(type) {
+                        case 'flight': return "ph-fill ph-airplane-tilt text-[#2d4a3a]";
+                        case 'transport': return "ph-fill ph-train text-[#2d4a3a]";
+                        case 'food': return "ph-fill ph-fork-knife text-[#c25934]";
+                        case 'shopping': return "ph-fill ph-tote text-[#d4af37]";
+                        case 'info': return "ph-fill ph-info text-[#8b9b82]";
+                        default: return "ph-fill ph-map-pin text-[#2d4a3a]";
+                    }
+                };
+
+                const recCategories = ["上野/淺草/新宿", "澀谷/原宿", "銀座/東京/秋葉原/南町田", "成田機場/伴手禮"];
+                const activeRecTab = ref(recCategories[0]);
+                const RECOMMENDATIONS = {
+                    "上野/淺草/新宿": [
+                        { name: "名代宇奈とと 鰻魚飯", rating: "4.3", type: "food", note: "上野必吃" },
+                        { name: "Negishi 烤牛舌", rating: "4.1", type: "food", note: "新宿定食" },
+                        { name: "塩パン屋 パン・メゾン", rating: "4.5", type: "food", note: "必吃塩麵包" },
+                        { name: "choioden 關東煮", rating: "4.0", type: "food", note: "新宿道地" },
+                        { name: "Windsor Racket Shop", rating: "4.5", type: "shop", note: "羽球裝備" },
+                        { name: "龜十銅鑼燒", rating: "4.6", type: "souvenir", note: "淺草伴手禮" }
+                    ],
+                    "澀谷/原宿": [
+                        { name: "極味屋 Kiwamiya", rating: "4.3", type: "food", note: "人氣漢堡排" },
+                        { name: "BRISKSTAND OMOTESANDO", rating: "4.5", type: "food", note: "百選和牛漢堡" },
+                        { name: "梅丘壽司美登利", rating: "4.3", type: "food", note: "超人氣壽司" }
+                    ],
+                    "銀座/東京/秋葉原/南町田": [
+                        { name: "肯德基吃到飽 (KFC)", rating: "4.5", type: "food", note: "南町田 日本唯3" },
+                        { name: "HIIRAGI 銀座本店", rating: "4.4", type: "food", note: "抹茶冰" },
+                        { name: "築地玉壽司", rating: "4.2", type: "food", note: "東京車站店" }
+                    ],
+                    "成田機場/伴手禮": [
+                        { name: "晴空戀巧巧克力", rating: "4.5", type: "souvenir", note: "成田獨賣" },
+                        { name: "PISTA & TOKYO", rating: "4.6", type: "souvenir", note: "開心果奶油" }
+                    ]
+                };
+
+                const recommendedApps = ref([
+                    { name: "Kuli Kuli", desc: "菜單拍照秒翻譯神器", iosLink: "https://apps.apple.com/tw/search?term=Kuli+Kuli", androidLink: "https://play.google.com/store/search?q=Kuli+Kuli&c=apps", fallbackIcon: "ph-fill ph-translate", fallbackBg: "bg-orange-100 text-orange-500" },
+                    { name: "tenki.jp", desc: "日本最準氣象預報", iosLink: "https://tenki.jp/", androidLink: "https://tenki.jp/", fallbackIcon: "ph-fill ph-cloud-sun", fallbackBg: "bg-blue-100 text-blue-500" },
+                    { name: "乘換案內", desc: "日本坐地鐵必備", iosLink: "https://world.jorudan.co.jp/mln/zh-tw/", androidLink: "https://world.jorudan.co.jp/mln/zh-tw/", fallbackIcon: "ph-fill ph-train", fallbackBg: "bg-red-100 text-red-500" },
+                    { name: "GO Taxi", desc: "日本當地叫車首選", iosLink: "https://apps.apple.com/tw/app/go-taxi-app-for-japan/id1254341709", androidLink: "https://play.google.com/store/apps/details?id=com.dena.automotive.taxibell", fallbackIcon: "ph-bold ph-car-profile", fallbackBg: "bg-gray-800 text-white" },
+                    { name: "Tabelog", desc: "查日本餐廳真實評價", iosLink: "https://apps.apple.com/tw/app/tabelog/id302860648", androidLink: "https://play.google.com/store/apps/details?id=com.kakaku.tabelog", fallbackIcon: "ph-fill ph-fork-knife", fallbackBg: "bg-amber-100 text-amber-600" },
+                    { name: "Payke", desc: "條碼掃描與免稅券", iosLink: "https://apps.apple.com/tw/app/payke/id1069628036", androidLink: "https://play.google.com/store/apps/details?id=jp.co.payke.Payke", fallbackIcon: "ph-bold ph-scan", fallbackBg: "bg-pink-100 text-pink-500" }
+                ]);
+
+                const shoppingItems = ref([
+                    { id: 1, name: "合利他命 EX Plus", qty: 2, note: "OS Drug", checked: false },
+                    { id: 2, name: "休足時間", qty: 3, note: "唐吉訶德", checked: true }
+                ]);
+                const newItem = ref({ name: "", qty: 1, note: "" });
+                const addShoppingItem = () => { if (!newItem.value.name.trim()) return; shoppingItems.value.unshift({ ...newItem.value, id: Date.now(), checked: false }); newItem.value = { name: "", qty: 1, note: "" }; };
+                const removeShoppingItem = (id) => { shoppingItems.value = shoppingItems.value.filter(item => item.id !== id); };
+
+                const exchangeRate = 0.213;
+                const jpy = ref('');
+                const jpyTwdValue = computed(() => jpy.value ? Math.round(parseFloat(jpy.value) * exchangeRate) : '0');
+
+                const expenses = ref([
+                    { id: 1, name: "富士山one day tour", amount: 2516, curr: "TWD", payer: "Tass" }
+                ]);
+                const expName = ref(''); const expAmount = ref(''); const expCurr = ref('JPY'); const expPayer = ref('Tass');
+                const addExpense = () => { const amt = parseFloat(expAmount.value); if (!expName.value || isNaN(amt) || amt <= 0) return; expenses.value.unshift({ id: Date.now(), name: expName.value, amount: amt, curr: expCurr.value, payer: expPayer.value }); expName.value = ''; expAmount.value = ''; };
+                const removeExpense = (id) => { expenses.value = expenses.value.filter(e => e.id !== id); };
+                const settlement = computed(() => { if (expenses.value.length === 0) return null; let tPaid = 0, cPaid = 0; expenses.value.forEach(exp => { const amt = exp.curr === 'JPY' ? exp.amount * exchangeRate : exp.amount; if (exp.payer === 'Tass') tPaid += amt; else cPaid += amt; }); const half = (tPaid + cPaid) / 2; if (tPaid > half) return { owePerson: "川", oweTo: "Tass", amount: Math.round(tPaid - half) }; else if (cPaid > half) return { owePerson: "Tass", oweTo: "川", amount: Math.round(cPaid - half) }; return { owePerson: "無", oweTo: "無", amount: 0 }; });
+
+                return { currentTab, tabs, activeDay, currentDayData, activeDetails, toggleDetails, getIconClass, recCategories, activeRecTab, RECOMMENDATIONS, recommendedApps, shoppingItems, newItem, addShoppingItem, removeShoppingItem, exchangeRate, jpy, jpyTwdValue, expenses, expName, expAmount, expCurr, expPayer, addExpense, removeExpense, settlement };
             }
-        }
-        function addShopItem() { 
-            const n = document.getElementById('shop-name').value; if(!n) return;
-            cart.push({name: n, note: document.getElementById('shop-note').value, done: false});
-            saveShop(); renderShopList(); document.getElementById('shop-name').value = ''; document.getElementById('shop-note').value = '';
-        }
-        function quickAdd(name) { cart.push({name, note: "推薦清單", done: false}); saveShop(); alert('已加入採購清單'); }
-        function saveShop() { localStorage.setItem('tokyo_cart', JSON.stringify(cart)); }
-        function renderShopList() {
-            const con = document.getElementById('current-shopping-list');
-            con.innerHTML = cart.map((it, idx) => `
-                <div class="flex items-center gap-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm ${it.done ? 'opacity-50 bg-slate-50' : ''}">
-                    <input type="checkbox" ${it.done ? 'checked' : ''} onchange="toggleItem(${idx})" class="w-8 h-8 accent-teal-700">
-                    <div class="flex-1 font-bold text-lg ${it.done ? 'line-through text-slate-400' : 'text-slate-800'}">${it.name} <span class="text-sm text-slate-500 ml-2">${it.note}</span></div>
-                    <button onclick="delItem(${idx})" class="text-slate-400 active:text-red-500 transition-colors"><i data-lucide="trash-2" size="24"></i></button>
-                </div>`).join('');
-            lucide.createIcons();
-        }
-        function toggleItem(idx) { cart[idx].done = !cart[idx].done; saveShop(); renderShopList(); }
-        function delItem(idx) { cart.splice(idx,1); saveShop(); renderShopList(); }
-
-        window.onload = init;
+        }).mount('#app');
     </script>
 </body>
 </html>
