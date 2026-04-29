@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>東京 Tokyo Vibes</title>
     
-    <!-- LINE/FB 專屬預覽縮圖 (讀取你的 PNG 圖片) -->
+    <!-- LINE/FB 專屬預覽縮圖 -->
     <meta property="og:title" content="東京 Tokyo Vibes">
-    <meta property="og:description" content="Tass & 川的專屬東京行程規劃">
+    <meta property="og:description" content="Tass & 川的專屬東京行程規劃 (經典質感版)">
     <meta property="og:image" content="apple-touch-icon.png">
     <meta property="og:type" content="website">
 
-    <!-- iOS 專屬主畫面圖示 (蘋果官方唯一指定檔名與格式，終結綠底白字) -->
+    <!-- iOS 專屬主畫面圖示 -->
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" href="apple-touch-icon.png">
     
-    <!-- 強制 PWA 獨立應用程式模式 (消滅上下網址列，變成全螢幕 APP) -->
+    <!-- 強制 PWA 獨立應用程式模式 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Tokyo Vibes">
     
-    <!-- 輕量級 Vue 3，保證本地端與手機完美運行 -->
+    <!-- Vue 3 & Tailwind & Icons -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -31,7 +31,6 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
         
-        /* 暴力清除所有手機瀏覽器的原生點擊高光，保持原生 APP 質感 */
         * { -webkit-tap-highlight-color: transparent !important; }
         button:focus, a:focus { outline: none !important; }
 
@@ -41,7 +40,7 @@
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
 <body class="flex justify-center selection:bg-[#8b9b82] selection:text-white font-sans text-gray-800">
@@ -50,8 +49,13 @@
         
         <div class="flex-1 overflow-hidden relative">
             
+            <!-- 回到最上方按鈕 (縮小並加入半透明效果) -->
+            <button v-if="showScrollTop" @click="scrollToTop" class="absolute bottom-24 right-4 w-10 h-10 bg-[#d4af37]/80 backdrop-blur-sm text-[#14221a] rounded-full flex items-center justify-center z-40 shadow-lg active:scale-95 transition-transform hover:bg-[#c25934]/90 hover:text-white border border-white/20">
+                <i class="ph-bold ph-arrow-up text-xl"></i>
+            </button>
+
             <!-- 1. 行程 (Itinerary) -->
-            <div v-if="currentTab === 'itinerary'" class="pb-[100px] h-full overflow-y-auto no-scrollbar relative bg-[#1a2b22]">
+            <div v-if="currentTab === 'itinerary'" class="pb-[100px] h-full overflow-y-auto no-scrollbar relative bg-[#1a2b22]" ref="scrollArea1" @scroll="handleScroll">
                 
                 <!-- 頂部 Hero 區塊 -->
                 <div class="relative animate-fade-in" :key="`header-${activeDay}`">
@@ -130,17 +134,17 @@
                                     <div class="flex flex-col flex-1 pr-2 justify-center">
                                         <div class="flex items-center flex-wrap">
                                             <i :class="[getIconClass(event.type), 'text-lg mr-1.5 shrink-0 flex items-center']"></i>
-                                            <span class="font-bold text-[#1a2b22] leading-snug flex items-center mr-1.5">{{ event.location }}</span>
-                                            <span v-if="event.inlineDetail" class="text-[11px] text-[#c25934] font-bold" v-html="event.inlineDetail"></span>
+                                            <span class="font-bold text-[#1a2b22] leading-snug flex items-center">{{ event.location }}</span>
+                                            <span v-if="event.inlineDetail" class="text-[11px] text-[#c25934] font-bold ml-1.5" v-html="event.inlineDetail"></span>
                                         </div>
                                     </div>
-                                    <a v-if="!event.noNav" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.location.replace(/<[^>]*>?/gm, ''))" target="_blank" class="bg-[#1a2b22] text-white text-[10px] px-3 py-2 rounded-lg shadow-md hover:bg-[#c25934] transition-colors shrink-0 flex items-center font-bold tracking-wider">
+                                    <a v-if="!event.noNav" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(event.navLocation || event.location.replace(/<[^>]*>?/gm, ''))" target="_blank" class="bg-[#1a2b22] text-white text-[10px] px-3 py-2 rounded-lg shadow-md hover:bg-[#c25934] transition-colors shrink-0 flex items-center font-bold tracking-wider">
                                         <i class="ph-bold ph-navigation-arrow mr-1 text-sm"></i>導航
                                     </a>
                                 </div>
 
                                 <div v-if="event.important" class="ml-1 mb-2 bg-[#3a5867]/10 text-[#3a5867] p-2.5 rounded-xl text-xs font-bold flex items-center border border-[#3a5867]/20 shadow-sm">
-                                    <i class="ph-fill ph-info text-base mr-1.5 flex-shrink-0 flex items-center"></i>
+                                    <i class="ph-fill ph-warning-circle text-base mr-1.5 flex-shrink-0 flex items-center"></i>
                                     <span class="leading-snug">{{ event.important }}</span>
                                 </div>
 
@@ -179,7 +183,7 @@
             </div>
 
             <!-- 2. 推薦 (Recommendations) -->
-            <div v-else-if="currentTab === 'recommendations'" class="pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]">
+            <div v-else-if="currentTab === 'recommendations'" class="pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]" ref="scrollArea2" @scroll="handleScroll">
                 <h2 class="px-5 text-2xl font-serif font-bold text-white mb-5 pb-2">探索清單名鑑</h2>
                 
                 <div class="w-full px-5 pb-2 mb-4">
@@ -194,23 +198,23 @@
                 <div class="px-5 space-y-3">
                     <div v-for="(item, idx) in RECOMMENDATIONS[activeRecTab]" :key="idx" class="bg-[#f4f1eb] p-4 rounded-2xl shadow flex justify-between items-center group hover:bg-white transition-colors">
                         <div class="flex items-center w-full pr-2">
-                            <div :class="['w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0', item.type === 'food' ? 'bg-[#8b9b82]/15' : item.type === 'souvenir' ? 'bg-pink-100' : 'bg-[#c25934]/10']">
+                            <div :class="['w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0', item.type === 'food' ? 'bg-[#8b9b82]/15' : item.type === 'souvenir' ? 'bg-pink-100 text-pink-600' : 'bg-[#c25934]/10']">
                                 <i v-if="item.type === 'food'" class="ph-fill ph-fork-knife text-xl text-[#2d4a3a]"></i>
-                                <i v-else-if="item.type === 'souvenir'" class="ph-fill ph-gift text-xl text-pink-600"></i>
+                                <i v-else-if="item.type === 'souvenir'" class="ph-fill ph-gift text-xl"></i>
                                 <i v-else class="ph-fill ph-tote text-xl text-[#c25934]"></i>
                             </div>
                             <div class="overflow-hidden flex-1">
                                 <div class="flex items-center justify-between">
                                     <h4 class="font-bold text-[#14221a] text-sm mb-0.5 truncate" v-html="item.name"></h4>
                                 </div>
-                                <p class="text-xs text-gray-500 font-medium truncate">{{ item.note }}</p>
+                                <p class="text-xs text-gray-500 font-medium line-clamp-2 pr-1">{{ item.note }}</p>
                             </div>
                         </div>
-                        <div class="flex flex-col items-end flex-shrink-0 ml-1 space-y-1">
-                            <span class="text-[#c25934] font-bold text-[11px] bg-[#c25934]/10 px-2 py-1 rounded-lg flex items-center shadow-sm">
+                        <div class="flex flex-col items-end flex-shrink-0 ml-1 space-y-2">
+                            <span v-if="item.rating" class="text-[#c25934] font-bold text-[11px] bg-[#c25934]/10 px-2 py-1 rounded-lg flex items-center shadow-sm">
                                 <i class="ph-fill ph-star mr-0.5 text-[#d4af37]"></i> {{ item.rating }}
                             </span>
-                            <a v-if="item.type === 'food'" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name.replace(/<[^>]*>?/gm, ''))" target="_blank" class="bg-[#2d4a3a] text-white text-[9px] px-2 py-1 rounded-md shadow-sm hover:bg-[#c25934] transition-colors flex items-center">
+                            <a v-if="item.type === 'food' || item.type === 'shop'" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.name.replace(/<[^>]*>?/gm, ''))" target="_blank" class="bg-[#2d4a3a] text-white text-[9px] px-2 py-1 rounded-md shadow-sm hover:bg-[#c25934] transition-colors flex items-center">
                                 <i class="ph-bold ph-navigation-arrow mr-1"></i>導航
                             </a>
                         </div>
@@ -219,37 +223,52 @@
             </div>
 
             <!-- 3. 戰略 (Strategy) -->
-            <div v-else-if="currentTab === 'strategy'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]">
+            <div v-else-if="currentTab === 'strategy'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]" ref="scrollArea3" @scroll="handleScroll">
                 <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">行軍戰略地圖</h2>
 
+                <!-- 出發前確認清單 (可存檔，完美縮小行距並換色) -->
+                <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6 border border-white/5">
+                    <h3 class="font-bold text-[#c25934] text-lg mb-3 flex items-center">
+                        <i class="ph-bold ph-check-square-offset text-xl mr-2 text-[#c25934]"></i> 出發前確認
+                    </h3>
+                    <div class="space-y-0.5">
+                        <div v-for="item in preChecklist" :key="item.id" @click="item.checked = !item.checked" class="flex items-start cursor-pointer py-1.5 px-2 hover:bg-black/5 rounded-xl transition-colors">
+                            <div class="shrink-0 mr-2.5 mt-0">
+                                <i v-if="item.checked" class="ph-fill ph-check-circle text-2xl text-[#8b9b82]"></i>
+                                <i v-else class="ph ph-circle text-2xl text-gray-300"></i>
+                            </div>
+                            <span :class="['text-[13px] font-bold transition-colors leading-snug py-0.5', item.checked ? 'text-gray-400 line-through' : 'text-[#14221a]']">{{ item.text }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 預約卡片 -->
                 <div class="bg-gradient-to-br from-[#c25934] to-[#a34727] p-5 rounded-[2rem] shadow-xl mb-6 text-white relative overflow-hidden border border-white/10">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
-                    <h3 class="font-bold text-lg mb-4 flex items-center"><i class="ph-fill ph-alarm text-2xl mr-2 text-[#d4af37]"></i> 搶票與預約確認</h3>
+                    <h3 class="font-bold text-lg mb-4 flex items-center"><i class="ph-fill ph-alarm text-2xl mr-2 text-[#d4af37]"></i> 預約確認狀態</h3>
                     <ul class="space-y-3 text-sm">
-                        <li class="flex items-start bg-black/20 p-4 rounded-2xl border border-white/5">
-                            <div class="bg-[#d4af37] text-black p-1.5 rounded-lg mr-3 shadow-md"><i class="ph-bold ph-ticket text-lg"></i></div>
-                            <div>
-                                <p class="font-bold text-[15px]">SHIBUYA SKY 夜景</p>
-                                <p class="text-white/90 text-xs mt-1.5 font-medium leading-relaxed">務必設定鬧鐘於 <span class="bg-red-500/90 px-1.5 py-0.5 rounded shadow-sm text-white">4/25 23:00</span> 搶購 5/10 門票！</p>
-                            </div>
-                        </li>
-                        
-                        <li class="flex items-center text-white font-medium pl-1 bg-[#8b9b82]/20 p-3 rounded-2xl border border-[#8b9b82]/30">
+                        <li class="flex items-center text-white font-medium pl-1 bg-[#8b9b82]/30 p-2.5 rounded-2xl border border-[#8b9b82]/40 backdrop-blur-md">
                             <div class="flex items-center">
                                 <i class="ph-fill ph-check-circle text-xl mr-2 text-[#8b9b82] shrink-0"></i> 
-                                <span>立吉炸串 - 新宿 (已預約 19:00)</span>
+                                <span>肉屋の台所 - 05/07 20:30 已預約 (KKday)</span>
                             </div>
                         </li>
-
-                        <li class="flex items-center text-white font-medium pl-1 bg-[#8b9b82]/20 p-3 rounded-2xl border border-[#8b9b82]/30">
+                        <li class="flex items-center text-white font-medium pl-1 bg-[#8b9b82]/30 p-2.5 rounded-2xl border border-[#8b9b82]/40 backdrop-blur-md">
                             <div class="flex items-center">
                                 <i class="ph-fill ph-check-circle text-xl mr-2 text-[#8b9b82] shrink-0"></i> 
-                                <span>敘敘苑 - 澀谷店 (已預約 13:00)</span>
+                                <span>敘敘苑 - 05/10 13:00 已預約 (官網)</span>
+                            </div>
+                        </li>
+                        <li class="flex items-center text-white font-medium pl-1 bg-[#8b9b82]/30 p-2.5 rounded-2xl border border-[#8b9b82]/40 backdrop-blur-md">
+                            <div class="flex items-center">
+                                <i class="ph-fill ph-check-circle text-xl mr-2 text-[#8b9b82] shrink-0"></i> 
+                                <span>立吉炸串 - 05/11 19:00 已預約 (TableCheck)</span>
                             </div>
                         </li>
                     </ul>
                 </div>
 
+                <!-- 路線卡片 -->
                 <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6">
                     <h3 class="font-bold text-[#14221a] text-lg mb-3 flex items-center">
                         <i class="ph-fill ph-map-trifold text-xl mr-2 text-[#2d4a3a]"></i> 表參道不迷路走法
@@ -274,14 +293,11 @@
                     </h3>
                     <div class="grid grid-cols-2 gap-3">
                         <div v-for="app in recommendedApps" :key="app.name" class="bg-white p-3 pt-4 rounded-2xl shadow-sm flex flex-col items-center text-center border border-black/5 relative overflow-hidden h-full">
-                            <div :class="['w-[48px] h-[48px] rounded-[14px] flex items-center justify-center mb-2 shadow-inner group-hover:scale-105 transition-transform border border-black/5', app.fallbackBg]">
+                            <div :class="['w-[48px] h-[48px] rounded-[14px] flex items-center justify-center mb-2 shadow-inner border border-black/5', app.fallbackBg]">
                                 <i :class="['text-2xl', app.fallbackIcon]"></i>
                             </div>
-                            
                             <span class="font-bold text-[#1a2b22] text-[13px] mb-1 leading-tight">{{ app.name }}</span>
-                            <span class="text-[9px] text-gray-500 leading-tight mb-3">{{ app.desc }}</span>
-                            
-                            <!-- 底部滿版按鈕分開 iOS 與 Android -->
+                            <span class="text-[9px] text-gray-500 leading-tight mb-3 h-6 flex items-center justify-center">{{ app.desc }}</span>
                             <div class="mt-auto w-full flex gap-1.5 z-10">
                                 <a :href="app.iosLink" target="_blank" class="flex-1 text-[10px] py-1.5 rounded-md font-bold bg-blue-50 text-blue-600 border border-blue-100 tracking-wider flex items-center justify-center hover:bg-blue-100 transition-colors">iOS</a>
                                 <a :href="app.androidLink" target="_blank" class="flex-1 text-[10px] py-1.5 rounded-md font-bold bg-green-50 text-green-600 border border-green-100 tracking-wider flex items-center justify-center hover:bg-green-100 transition-colors">Android</a>
@@ -292,7 +308,7 @@
             </div>
 
             <!-- 4. 購物 (Shopping) -->
-            <div v-else-if="currentTab === 'shopping'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in flex flex-col no-scrollbar relative bg-[#1a2b22]">
+            <div v-else-if="currentTab === 'shopping'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in flex flex-col no-scrollbar relative bg-[#1a2b22]" ref="scrollArea4" @scroll="handleScroll">
                 <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">戰利品清單</h2>
 
                 <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
@@ -333,8 +349,17 @@
             </div>
 
             <!-- 5. 工具 (Tools) -->
-            <div v-else-if="currentTab === 'tools'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]">
+            <div v-else-if="currentTab === 'tools'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]" ref="scrollArea5" @scroll="handleScroll">
                 <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">旅行工具箱</h2>
+
+                <!-- 隨手記事本 -->
+                <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
+                    <h3 class="font-bold text-[#14221a] mb-3 flex items-center text-sm">
+                        <i class="ph-fill ph-note-pencil text-xl mr-1.5 text-[#2d4a3a]"></i> 隨手筆記本
+                    </h3>
+                    <p class="text-[11px] text-gray-500 font-medium mb-3">臨時新增的行程或清單，打在這裡會自動存檔！</p>
+                    <textarea v-model="personalNotes" class="w-full h-32 bg-white text-[#14221a] p-3 rounded-xl shadow-inner font-medium text-sm outline-none resize-none border-none focus:ring-2 focus:ring-[#8b9b82]" placeholder="在這裡輸入任何筆記..."></textarea>
+                </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div class="bg-gradient-to-br from-[#4facfe] to-[#00f2fe] p-4 rounded-3xl shadow-lg text-white flex flex-col justify-between h-32 relative overflow-hidden">
@@ -354,17 +379,18 @@
                     </a>
                 </div>
 
+                <!-- 匯率換算 (加大輸入框) -->
                 <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
                     <h3 class="font-bold text-[#14221a] mb-4 flex items-center text-sm"><i class="ph-fill ph-currency-circle-dollar text-xl mr-1.5 text-[#8b9b82]"></i> 快速匯率換算</h3>
                     <div class="flex items-center space-x-3">
                         <div class="flex-1 relative">
-                            <span class="absolute left-3 top-3 text-gray-500 font-bold text-sm">¥</span>
-                            <input type="number" v-model="jpy" class="w-full bg-white pl-8 pr-4 py-3 rounded-xl text-sm outline-none shadow-inner font-medium" placeholder="日幣" />
+                            <span class="absolute left-3 top-4 text-gray-500 font-bold text-base">¥</span>
+                            <input type="number" v-model="jpy" class="w-full bg-white pl-8 pr-4 py-4 rounded-xl text-base outline-none shadow-inner font-bold" placeholder="日幣" />
                         </div>
                         <div class="text-gray-400 font-bold"><i class="ph-bold ph-arrow-right text-xl"></i></div>
-                        <div class="flex-1 bg-white px-4 py-3 rounded-xl shadow-inner text-[#c25934] font-bold text-sm flex items-center justify-between">
-                            <span>NT$</span>
-                            <span>{{ jpyTwdValue }}</span>
+                        <div class="flex-1 bg-white px-4 py-4 rounded-xl shadow-inner text-[#c25934] font-bold text-base flex items-center justify-between">
+                            <span class="text-sm">NT$</span>
+                            <span class="text-lg">{{ jpyTwdValue }}</span>
                         </div>
                     </div>
                     <p class="text-right text-[10px] text-gray-400 mt-2 font-medium">參考匯率: 1 JPY = {{ exchangeRate }} TWD</p>
@@ -430,11 +456,11 @@
         <div class="absolute bottom-0 left-0 right-0 bg-[#1a2b22]/95 backdrop-blur-xl pb-safe pt-2 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 border-t border-white/5">
             <div class="flex justify-around items-center px-1">
                 <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
-                    :class="['flex flex-col items-center justify-center w-16 transition-all duration-400 ease-out', currentTab === tab.id ? 'text-[#d4af37] -translate-y-2' : 'text-white/40 hover:text-white/70']">
+                    :class="['flex flex-col items-center justify-center w-16 transition-all duration-400 ease-out py-1', currentTab === tab.id ? 'text-[#d4af37] -translate-y-2' : 'text-white/40 hover:text-white/70']">
                     <div :class="['p-2.5 rounded-2xl mb-1 transition-colors', currentTab === tab.id ? 'bg-[#d4af37]/15 shadow-inner' : '']">
                         <i :class="[(currentTab === tab.id ? 'ph-fill' : 'ph'), tab.icon, 'text-2xl']"></i>
                     </div>
-                    <span :class="['text-[10px] tracking-widest transition-all', currentTab === tab.id ? 'font-bold opacity-100' : 'font-medium opacity-0 transform translate-y-2']">
+                    <span :class="['text-[10px] tracking-widest transition-all', currentTab === tab.id ? 'font-bold opacity-100' : 'font-medium opacity-0 transform translate-y-2 absolute']">
                         {{ tab.label }}
                     </span>
                 </button>
@@ -445,7 +471,7 @@
 
     <!-- 應用程式邏輯 (Vue 3) -->
     <script>
-        const { createApp, ref, computed } = Vue;
+        const { createApp, ref, computed, watch, onMounted } = Vue;
 
         createApp({
             setup() {
@@ -461,78 +487,78 @@
                 const activeDay = ref(1);
                 const activeDetails = ref([]);
                 
-                // --- 每日圖片與資料設定 ---
+                // --- 每日圖片與資料設定 (經典配色版) ---
                 const ITINERARY = {
                     1: { 
-                        date: "5/7 (四)", title: "上野著陸・愜意探路", routeSummary: "高雄 ✈️ 成田 ➡ 東京上野", weather: "19°C~22°C | 晴時多雲", 
+                        date: "5/7 (四)", title: "上野著陸・探路", routeSummary: "高雄 ✈️ 成田 ➡ 上野", weather: "19°C~22°C | 晴時多雲", 
                         color: "from-[#788a6d] to-[#5a6b50]", 
                         heroImage: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
                         events: [
                             { id: "d1-1", time: "12:55 - 17:35", title: "高雄 ✈️ 成田 (CI 126)", location: "小港機場 T1 → 成田 T2", type: "flight", duration: "3h40m", notes: "請提早抵達機場報到", noNav: true },
-                            { id: "d1-2", time: "17:45 - 19:00", title: "抵達東京・通關+拿行李", location: "成田機場 T2", type: "info", important: "預先準備 VJW QR code 截圖" },
-                            { id: "d1-3", time: "19:00 - 20:30", title: "前往飯店 (APA Hotel)", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", duration: "44m", transportDetails: { method: "搭乘 Skyliner", route: "成田機場 T2 → 京成上野站", walking: "步行 2 分鐘至飯店", note: "如果時間允許，先登記入住並放行李。可先劃回程 Skyliner。" } },
-                            { id: "d1-4", time: "20:30 - 21:40", title: "晚餐：肉屋の台所", location: "肉屋の台所 上野店", inlineDetail: "(已預約 20:30)", details: "A5和牛燒肉吃到飽", type: "food" },
+                            { id: "d1-2", time: "17:45 - 19:00", title: "抵達東京・通關+行李", location: "成田機場 T2", type: "info", important: "預先準備 VJW QR code 截圖" },
+                            { id: "d1-3", time: "19:00 - 20:30", title: "前往飯店 (APA Hotel)", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", duration: "44m", transportDetails: { method: "搭乘 Skyliner", route: "成田機場 T2 → 京成上野站", walking: "步行 2 分鐘至飯店", note: "可先劃回程 Skyliner" } },
+                            { id: "d1-4", time: "20:30 - 21:40", title: "晚餐：肉屋の台所", location: "肉屋の台所 上野公園前店", navLocation: "肉屋の台所 上野公園前店", inlineDetail: "(已預約 20:30)", details: "A5和牛燒肉吃到飽", type: "food" },
                             { id: "d1-5", time: "21:40 - 23:00", title: "阿美橫町閒逛", location: "阿美橫町", type: "shopping", details: "松本清 (23:00打烊) / 唐吉訶德 (01:00打烊)", notes: "藥妝查詢松本清價格" },
-                            { id: "d1-6", time: "23:00 - 23:10", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", transportDetails: { method: "步行", route: "從阿美橫町步行回飯店", walking: "約 5-10 分鐘" } }
+                            { id: "d1-6", time: "23:00 - 23:10", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", transportDetails: { method: "步行", route: "阿美橫町 → 飯店", walking: "約 5 分鐘" } }
                     ]},
                     2: { 
-                        date: "5/8 (五)", title: "淺草文化・登塔望遠", routeSummary: "淺草寺 ➡ 晴空塔 ➡ 明治神宮 ➡ 新宿", weather: "20°C~25°C | 晴朗", 
+                        date: "5/8 (五)", title: "淺草文化・望遠", routeSummary: "淺草寺 ➡ 晴空塔 ➡ 新宿", weather: "20°C~25°C | 晴朗", 
                         color: "from-[#c25934] to-[#9a4528]", 
                         heroImage: "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=800&q=80",
                         events: [
-                            { id: "d2-1", time: "08:00 - 08:30", title: "出門 & 早餐", location: "LAWSON", type: "food", details: "推薦必喝：焙茶厚乳拿鐵 👍", badge: "🎟️ 開通 72hr 券" },
-                            { id: "d2-2", time: "09:00 - 11:20", title: "淺草寺巡禮", location: "淺草寺", type: "spot", duration: "3h", details: "雷門 → 五重塔 → 仲見世 → 逛街", notes: "吉備糰子、淺草絲綢布丁、吃メンチ炸肉餅、壽壽喜園抹茶", ticketBadge: true, transportDetails: { method: "東京地下鐵", route: "上野站 ➡ 淺草站 (銀座線)", duration: "約 5 分鐘", note: "可用 72hr 地鐵券" } },
+                            { id: "d2-1", time: "08:00 - 08:30", title: "出門 & 早餐", location: "LAWSON", navLocation: "LAWSON 上野四丁目店", type: "food", details: "推薦必喝：焙茶厚乳拿鐵 👍", badge: "🎟️ 開通 72hr 券" },
+                            { id: "d2-2", time: "09:00 - 11:20", title: "淺草寺巡禮", location: "淺草寺", navLocation: "淺草寺 雷門", type: "spot", duration: "3h", details: "雷門 → 五重塔 → 仲見世 → 逛街", notes: "吉備糰子、淺草絲綢布丁、吃メンチ炸肉餅", ticketBadge: true, transportDetails: { method: "東京地下鐵", route: "上野站 ➡ 淺草站 (銀座線)", duration: "約 5 分鐘", note: "可用 72hr 地鐵券" } },
                             { id: "d2-3", time: "11:30 - 13:00", title: "午餐：淺草今半", location: "淺草今半 國際通本店", type: "food", details: "和牛壽喜燒 / 百年牛丼" },
                             { id: "d2-4", time: "13:00 - 14:00", title: "晴空塔展望", location: "晴空塔", type: "spot", transportDetails: { method: "都營淺草線 / 東武線", route: "淺草站 → 押上站", duration: "約 9 分鐘", note: "電車行進中也可以拍照" }, ticketBadge: true },
-                            { id: "d2-5", time: "15:00 - 16:30", title: "明治神宮", location: "明治神宮", type: "spot", duration: "1.5h", details: "大鳥居、本殿、奉獻酒樽<br>CAFÉ Mori no Terrace、FLOTO冰淇淋店 (表參道原宿方向)", transportDetails: { method: "東京地下鐵", route: "押上站 ➡ 表參道 ➡ 原宿站", duration: "約 40 分鐘", note: "全程可使用 72hr 地鐵券" }, ticketBadge: true },
+                            { id: "d2-5", time: "15:00 - 16:30", title: "明治神宮", location: "明治神宮", type: "spot", duration: "1.5h", details: "大鳥居、本殿、奉獻酒樽", notes: "CAFÉ Mori no Terrace<br>FLOTO冰淇淋店 (表參道原宿方向)", transportDetails: { method: "東京地下鐵", route: "押上站 ➡ 表參道 ➡ 原宿站", duration: "約 40 分鐘", note: "全程可使用 72hr 地鐵券" }, ticketBadge: true },
                             { id: "d2-6", time: "17:00 - 19:30", title: "新宿逛街", location: "Windsor羽球", navLocation: "Windsor Racket Shop Shinjuku", type: "shopping", details: "3D巨大三色貓 / 哥吉拉頭", notes: "OS drug / Windsor羽球 皆營業至19:30。藥妝於今日在OS買入", transportDetails: { method: "東京地下鐵", route: "原宿站 ➡ 新宿三丁目", duration: "約 20 分鐘", note: "可用 72hr 地鐵券" }, ticketBadge: true },
-                            { id: "d2-7", time: "19:30 - 20:30", title: "晚餐：Negishi 烤牛舌", location: "Negishi 新宿", type: "food", details: "新宿有很多分店，可找沒人排隊的吃即可" },
-                            { id: "d2-8", time: "20:30 - 22:30", title: "新宿夜間巡禮", location: "歌舞伎町", type: "spot", details: "Uniqlo 旗艦店 / ALPEN 球鞋 <br> GU 旗艦店", notes: "GU 營業至 22:00 (最後一逛)<br>無視歌舞伎町穿著西裝的男子，遇到推銷直接無視快步走過" },
+                            { id: "d2-7", time: "19:30 - 20:30", title: "晚餐：Negishi(或利久)牛舌", location: "Negishi 新宿", type: "food", details: "新宿有很多分店，找沒人排隊的吃即可" },
+                            { id: "d2-8", time: "20:30 - 22:30", title: "新宿夜間巡禮", location: "歌舞伎町", type: "spot", details: "Uniqlo 旗艦店 / ALPEN 球鞋 <br> GU 旗艦店", notes: "遇風俗推銷無視速離" },
                             { id: "d2-9", time: "22:30 - 23:00", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", transportDetails: { method: "大江戶線", route: "新宿 ➡ 上野", duration: "30m", note: "宵夜：一蘭拉麵上野店" } }
                     ]},
                     3: { 
-                        date: "5/9 (六)", title: "爆買血拼・銀座巡禮", routeSummary: "南町田 ➡ 銀座 ➡ 秋葉原", weather: "21°C~26°C | 多雲轉晴", 
+                        date: "5/9 (六)", title: "爆買血拼・銀座", routeSummary: "南町田 ➡ 銀座 ➡ 秋葉原", weather: "21°C~26°C | 多雲轉晴", 
                         color: "from-[#d4af37] to-[#b08e26]", 
                         heroImage: "https://images.unsplash.com/photo-1554797589-7241bb691973?w=800&q=80", 
                         events: [
                             { id: "d3-1", time: "09:00 - 14:30", title: "南町田 Outlet", location: "南町田 GRAND BERRY 公園", type: "shopping", transportDetails: { method: "地下鐵 + 東急田園都市線", route: "上野 ➡ 表參道 ➡ 南町田", duration: "約 1.5h", note: "需確保路線可使用72hr地鐵券" }, ticketBadge: true },
                             { id: "d3-2", time: "16:00 - 18:00", title: "銀座逛街", location: "銀座 SIX", type: "shopping", details: "loft, <span class='text-[#da291c] font-black'>HIIRAGI抹茶冰</span>", notes: "精品策略: 去三越/松屋百貨拿 5% Guest Card", transportDetails: { method: "東急田園都市線 ➡ 銀座線", route: "南町田 ➡ 澀谷轉乘 ➡ 銀座站", duration: "約 45 分鐘" } },
-                            { id: "d3-3", time: "18:00 - 19:30", title: "晚餐：牛かつ もと村", location: "牛かつ もと村 秋葉原店", type: "food", transportDetails: { method: "東京地下鐵", route: "銀座站 ➡ 神田站", duration: "12m" } },
-                            { id: "d3-4", time: "19:30 - 22:00", title: "秋葉原探險", location: "秋葉原", type: "spot" },
-                            { id: "d3-5", time: "22:00 - 22:15", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", transportDetails: { method: "東京地下鐵", route: "末廣町 ➡ 上野", duration: "5m" }, ticketBadge: true }
+                            { id: "d3-3", time: "18:00 - 19:30", title: "晚餐：牛かつ もと村", location: "牛かつ もと村 秋葉原店", type: "food", badge: "⏳ 需排隊", transportDetails: { method: "東京地下鐵", route: "銀座站 ➡ 神田站", duration: "12m" } },
+                            { id: "d3-4", time: "19:30 - 22:00", title: "秋葉原探險", location: "秋葉原", type: "spot", details: "宅宅聖地與電器街巡禮" },
+                            { id: "d3-5", time: "22:00 - 22:15", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", transportDetails: { method: "東京地下鐵", route: "末廣町 ➡ 上野", duration: "5m", note: "出站後步行約 2 分鐘" }, ticketBadge: true }
                     ]},
                     4: { 
-                        date: "5/10 (日)", title: "潮男聖地・璀璨夜景", routeSummary: "上野 ➡ 東京鐵塔 ➡ 表參道 ➡ SHIBUYA SKY", weather: "22°C~27°C | 晴朗", 
+                        date: "5/10 (日)", title: "潮男聖地・夜景", routeSummary: "東京鐵塔 ➡ 表參道 ➡ 澀谷", weather: "22°C~27°C | 晴朗", 
                         color: "from-[#5b7c8c] to-[#3a5867]", 
                         heroImage: "https://images.unsplash.com/photo-1542931287-023b922fa89b?w=800&q=80", 
                         events: [
-                            { id: "d4-1", time: "08:00 - 09:15", title: "上野出發", location: "上野", type: "info", noNav: true },
-                            { id: "d4-2", time: "09:15 - 10:00", title: "東京鐵塔", location: "東京鐵塔", details: "(存在google地圖中)", type: "spot", ticketBadge: true, transportDetails: { method: "東京地下鐵", route: "上野 ➡ 神谷町", duration: "27m", note: "全程可用 72hr 券" } },
+                            { id: "d4-1", time: "08:00 - 09:15", title: "上野出發 (或上野公園散步)", location: "上野", type: "info", noNav: true, notes: "沒有要在上野早餐可以提早出門" },
+                            { id: "d4-2", time: "09:15 - 10:00", title: "東京鐵塔", location: "東京鐵塔", details: "(拍照點存在google地圖中)", type: "spot", ticketBadge: true, transportDetails: { method: "東京地下鐵", route: "上野 ➡ 神谷町", duration: "27m", note: "全程可用 72hr 券" } },
                             { id: "d4-3", time: "10:30 - 11:00", title: "HUMAN MADE 咖啡", location: "HUMAN MADE OFFLINE STORE", type: "food", transportDetails: { method: "東京地下鐵", route: "神谷町 ➡ 表參道", duration: "9m" } },
-                            { id: "d4-4", time: "11:00 - 13:00", title: "原宿/表參道 潮牌", location: "表參道", type: "shopping" },
-                            { id: "d4-5", time: "13:00 - 14:30", title: "午餐：敘敘苑", location: "敘敘苑 澀谷店", inlineDetail: "(已預約 13:00)", type: "food" },
-                            { id: "d4-6", time: "14:30 - 18:00", title: "澀谷逛街", location: "澀谷 貓街", type: "shopping" },
-                            { id: "d4-7", time: "18:00 - 20:00", title: "SHIBUYA SKY", location: "SHIBUYA SKY", type: "spot" },
-                            { id: "d4-8", time: "20:00 - 21:30", title: "晚餐：美登利總本店", location: "活美登利 澀谷西武店", type: "food" },
+                            { id: "d4-4", time: "11:00 - 13:00", title: "原宿/表參道 潮牌", location: "表參道", type: "shopping", details: "HOKA, Salomon, Asics, Converse 等旗艦店", notes: "Mizuno TOKYO 原宿精選店" },
+                            { id: "d4-5", time: "13:00 - 14:30", title: "午餐：敘敘苑", location: "敘敘苑 澀谷店", inlineDetail: "(已預約 13:00)", type: "food", transportDetails: { method: "地下鐵 / 步行", route: "明治神宮前站 ➡ 澀谷站 (副都心線 1站)", note: "走累了就直接用 72hr 券搭一站地鐵" }, ticketBadge: true },
+                            { id: "d4-6", time: "14:30 - 16:00", title: "SHIBUYA SKY 拍照", location: "SHIBUYA SKY", type: "spot", details: "沒搶到夜景門票，改下午拍照(也可省略此點)", transportDetails: { method: "步行", route: "距離約 6 分鐘" } },
+                            { id: "d4-7", time: "16:00 - 20:00", title: "澀谷逛街", location: "澀谷 貓街", type: "shopping", details: "貓街、忠犬八公、BRISKSTAND 百選和牛漢堡店", notes: "下午茶可吃 A Happy Pancake 鬆餅" },
+                            { id: "d4-8", time: "20:00 - 21:30", title: "晚餐：美登利總本店", location: "活美登利 澀谷西武店", type: "food", details: "抵達澀谷後，立刻先去 Mark City 4F 抽號碼牌<br>直接去西武百貨 A 館 8F 的活美登利迴轉壽司" },
                             { id: "d4-9", time: "21:30 - 22:10", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "transport", transportDetails: { method: "銀座線", route: "澀谷 ➡ 上野", duration: "28m" }, ticketBadge: true }
                     ]},
                     5: { 
-                        date: "5/11 (一)", title: "富士山下・尋找美景", routeSummary: "東京 ➡ 富士山河口湖 ➡ 新宿", weather: "15°C~20°C | 晴朗有雲", 
+                        date: "5/11 (一)", title: "富士山・尋找美景", routeSummary: "東京 ➡ 富士山河口湖 ➡ 新宿", weather: "15°C~20°C | 晴朗有雲", 
                         color: "from-[#8c7a6b] to-[#6b5a4b]", 
                         heroImage: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=800&q=80", 
                         events: [
                             { id: "d5-1", time: "06:40 - 07:20", title: "東京站集合", location: "東京站丸之內北口", type: "transport", transportDetails: { method: "JR 山手線", route: "上野 ➡ 東京車站", duration: "7m" } },
-                            { id: "d5-2", time: "07:20 - 18:30", title: "河口湖 一日遊", location: "河口湖", type: "spot", duration: "11h", noNav: true },
-                            { id: "d5-3", time: "19:00 - 20:00", title: "晚餐：立吉 炸串", location: "新宿立吉", inlineDetail: "(已預約 19:00)", type: "food" },
-                            { id: "d5-4", time: "20:00 - 22:00", title: "新宿最終掃貨", location: "新宿車站", type: "shopping", transportDetails: { method: "JR 山手線", route: "新宿 ➡ 上野", duration: "25m", note: "掃貨完直接搭車回飯店" } },
+                            { id: "d5-2", time: "07:20 - 18:30", title: "河口湖 一日遊", location: "河口湖", type: "spot", duration: "11h", noNav: true, notes: "trip.com 行程已預訂。回程選在新宿下車，方便最後衝刺" },
+                            { id: "d5-3", time: "19:00 - 20:00", title: "晚餐：立吉 炸串", location: "新宿立吉", inlineDetail: "(已預約 19:00)", type: "food", details: "一串220円，會一直上到客人喊停" },
+                            { id: "d5-4", time: "20:00 - 22:00", title: "新宿最終掃貨", location: "新宿車站", type: "shopping", details: "買齊零食、伴手禮", transportDetails: { method: "JR 山手線", route: "新宿 ➡ 上野", duration: "25m", note: "掃貨完直接搭車回飯店" } },
                             { id: "d5-5", time: "22:00 - 22:10", title: "回飯店休息", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", noNav: true }
                     ]},
                     6: { 
-                        date: "5/12 (二)", title: "滿載而歸・期待下次", routeSummary: "上野 ➡ 成田機場 ➡ 台灣", weather: "20°C~24°C | 多雲", 
+                        date: "5/12 (二)", title: "滿載而歸", routeSummary: "上野 ➡ 成田機場 ➡ 台灣", weather: "20°C~24°C | 多雲", 
                         color: "from-[#2d4a3a] to-[#1a2b22]", 
                         heroImage: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80", 
                         events: [
-                            { id: "d6-1", time: "08:30 - 10:00", title: "飯店 Check out", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", noNav: true },
+                            { id: "d6-1", time: "08:30 - 10:00", title: "飯店 Check out", location: "APA Hotel Keisei Ueno-Ekimae", type: "info", noNav: true, details: "整理行李，確認伴手禮" },
                             { id: "d6-2", time: "11:00 - 13:35", title: "前往機場 & 搭機", location: "成田機場 T2", type: "flight", important: "10:20 前須搭上 Skyliner" }
                     ]}
                 };
@@ -546,6 +572,34 @@
                     }
                 };
 
+                // 右下角回到頂部邏輯
+                const scrollArea1 = ref(null);
+                const scrollArea2 = ref(null);
+                const scrollArea3 = ref(null);
+                const scrollArea4 = ref(null);
+                const scrollArea5 = ref(null);
+                const showScrollTop = ref(false);
+                
+                const handleScroll = (e) => {
+                    showScrollTop.value = e.target.scrollTop > 300;
+                };
+                const scrollToTop = () => {
+                    let area = null;
+                    if(currentTab.value === 'itinerary') area = scrollArea1.value;
+                    else if(currentTab.value === 'recommendations') area = scrollArea2.value;
+                    else if(currentTab.value === 'strategy') area = scrollArea3.value;
+                    else if(currentTab.value === 'shopping') area = scrollArea4.value;
+                    else if(currentTab.value === 'tools') area = scrollArea5.value;
+                    
+                    if (area) {
+                        area.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                };
+
+                watch(currentTab, () => {
+                    showScrollTop.value = false;
+                });
+
                 const getIconClass = (type) => {
                     switch(type) {
                         case 'flight': return "ph-fill ph-airplane-tilt text-[#2d4a3a]";
@@ -557,30 +611,103 @@
                     }
                 };
 
+                // --- 出發前確認 (LocalStorage 保存) ---
+                const defaultPreCheck = [
+                    { id: 1, text: "護照有效期限 6 個月以上", checked: false },
+                    { id: 2, text: "行李 double check (含後背包/行李提袋)", checked: false },
+                    { id: 3, text: "eSIM 購買", checked: false },
+                    { id: 4, text: "Skyliner 去程 (人臉辨識) 購買", checked: false },
+                    { id: 5, text: "Skyliner 回程 (也可到日後於上野站購入) 購買", checked: false },
+                    { id: 6, text: "72 小時地鐵券 購買", checked: false },
+                    { id: 7, text: "出發前 48 小時至華航劃位", checked: false },
+                    { id: 8, text: "王橘寶旅住暫居的用品", checked: false },
+                    { id: 9, text: "換日幣及確認信用卡可境外交易或提款", checked: false },
+                    { id: 10, text: "西瓜卡綁定在 iPhone", checked: false }
+                ];
+                const savedPreCheck = localStorage.getItem('tokyo_precheck_v2');
+                const preChecklist = ref(savedPreCheck ? JSON.parse(savedPreCheck) : defaultPreCheck);
+                
+                watch(preChecklist, (newVal) => { 
+                    localStorage.setItem('tokyo_precheck_v2', JSON.stringify(newVal)); 
+                }, { deep: true });
+
+                // --- 推薦資料 (嚴格依照美食 ➡ 購物伴手禮排序) ---
                 const recCategories = ["上野/淺草/新宿", "澀谷/原宿", "銀座/東京/秋葉原/南町田", "成田機場/伴手禮"];
                 const activeRecTab = ref(recCategories[0]);
                 const RECOMMENDATIONS = {
                     "上野/淺草/新宿": [
+                        // 美食餐廳上半段
                         { name: "名代宇奈とと 鰻魚飯", rating: "4.3", type: "food", note: "上野必吃" },
-                        { name: "Negishi 烤牛舌", rating: "4.1", type: "food", note: "新宿定食" },
-                        { name: "塩パン屋 パン・メゾン", rating: "4.5", type: "food", note: "必吃塩麵包" },
+                        { name: "高級喫茶 古城", rating: "4.0", type: "food", note: "09:00-20:00 (光和ビル B1F)" },
                         { name: "choioden 關東煮", rating: "4.0", type: "food", note: "新宿道地" },
-                        { name: "Windsor Racket Shop", rating: "4.5", type: "shop", note: "羽球裝備" },
-                        { name: "龜十銅鑼燒", rating: "4.6", type: "souvenir", note: "淺草伴手禮" }
+                        { name: "Negishi (ねぎし) 烤牛舌定食", rating: "4.1", type: "food", note: "新宿定食" },
+                        { name: "塩パン屋 パン・メゾン 新宿店", rating: "4.5", type: "food", note: "KT新宿三番街 1階" },
+                        // 購物伴手禮下半段
+                        { name: "ART SPORT", type: "shop", note: "推薦必逛" },
+                        { name: "西友超市", type: "shop", note: "淺草 24小時好買" },
+                        { name: "新宿迪士尼商店", type: "shop", note: "新宿東口，可DIY印刷T恤" },
+                        { name: "新宿伊勢丹百貨", type: "shop", note: "10:00 - 20:00" },
+                        { name: "LUMINE", type: "shop", note: "女裝 11:00 - 21:00" },
+                        { name: "Sports wear Disc. Alpen Tokyo", type: "shop", note: "推球鞋最划算 (11:00-21:00)" },
+                        { name: "Windsor Racket Shop", type: "shop", note: "羽球裝備 (10:30-19:30)" },
+                        { name: "龜十銅鑼燒", rating: "4.6", type: "souvenir", note: "淺草伴手禮名物" }
                     ],
                     "澀谷/原宿": [
-                        { name: "極味屋 Kiwamiya", rating: "4.3", type: "food", note: "人氣漢堡排" },
+                        // 美食餐廳上半段
+                        { name: "Curry & Cafe SAMA 明治神宮前店", rating: "4.2", type: "food", note: "網友激推湯咖哩" },
+                        { name: "Blue Bottle Harajuku", type: "food", note: "原宿神宮前" },
+                        { name: "極味屋 Kiwamiya (漢堡排)", rating: "4.3", type: "food", note: "澀谷 人氣漢堡排" },
                         { name: "BRISKSTAND OMOTESANDO", rating: "4.5", type: "food", note: "百選和牛漢堡" },
-                        { name: "梅丘壽司美登利", rating: "4.3", type: "food", note: "超人氣壽司" }
+                        { name: "EDW yellow", rating: "4.4", type: "food", note: "蛋包飯 法國吐司" },
+                        { name: "選泉 青山本店", rating: "4.4", type: "food", note: "炸豬排" },
+                        { name: "Coffee Counter Nishiya", rating: "4.3", type: "food", note: "咖啡輕食" },
+                        { name: "梅丘壽司美登利", rating: "4.3", type: "food", note: "超人氣壽司" },
+                        { name: "牛かつ もと村 (炸牛排)", rating: "4.9", type: "food", note: "炸牛排最高殿堂" },
+                        // 購物伴手禮下半段
+                        { name: "HOKA 原宿旗艦店", type: "shop", note: "11:00 - 20:00" },
+                        { name: "Salomon 原宿店", type: "shop", note: "11:00 - 20:00" },
+                        { name: "ASICS 原宿旗艦店", type: "shop", note: "11:00 - 21:00" },
+                        { name: "Mizuno TOKYO 原宿精選店", type: "shop", note: "11:00 - 20:00" },
+                        { name: "On 表參道店", type: "shop", note: "Google請搜 On Omotesando" }
                     ],
                     "銀座/東京/秋葉原/南町田": [
-                        { name: "肯德基吃到飽 (KFC)", rating: "4.5", type: "food", note: "南町田 日本唯3" },
-                        { name: "HIIRAGI 銀座本店", rating: "4.4", type: "food", note: "抹茶冰" },
-                        { name: "築地玉壽司", rating: "4.2", type: "food", note: "東京車站店" }
+                        // 美食餐廳上半段
+                        { name: "肯德基吃到飽 (KFC)", rating: "4.5", type: "food", note: "Kids Discovery 1F (日本唯3)" },
+                        { name: "Snow Peak Eat", type: "food", note: "戶外烤肉風味" },
+                        { name: "Afuri 柚子鹽拉麵", type: "food", note: "銀座" },
+                        { name: "HIIRAGI 銀座本店", rating: "4.4", type: "food", note: "抹茶冰/甜點" },
+                        { name: "GINZA SIX B2 美食街", type: "food", note: "可外帶回飯店" },
+                        { name: "築地玉壽司 東京車站店", type: "food", note: "東京車站內" },
+                        { name: "壽司田 東京站一番街店", type: "food", note: "東京站一番街" },
+                        { name: "三浦三崎港 迴轉壽司", type: "food", note: "東京車站店" },
+                        { name: "秋葉原牛奶 MILK SHOP LUCK RAKU", type: "food", note: "秋葉原站6號月台旁" },
+                        { name: "Gyukatsu Ichi Ni San", rating: "4.8", type: "food", note: "秋葉原 炸豬排專門店" },
+                        { name: "Ramen Tanaka soba Akihabara", rating: "4.2", type: "food", note: "拉麵店" },
+                        { name: "bintje.", rating: "4.3", type: "food", note: "比利時炸薯條" },
+                        // 購物伴手禮下半段
+                        { name: "二手精品店-東京中古 MIYABI", type: "shop", note: "神田2丁目" },
+                        { name: "GENERAL STORE RAILYARD 秋葉原", type: "shop", note: "鐵道周邊店" },
+                        { name: "日本各地名產 CHABARA", type: "shop", note: "秋葉原站電氣街口向右" }
                     ],
                     "成田機場/伴手禮": [
-                        { name: "晴空戀巧巧克力", rating: "4.5", type: "souvenir", note: "成田獨賣" },
-                        { name: "PISTA & TOKYO", rating: "4.6", type: "souvenir", note: "開心果奶油" }
+                        // 美食餐廳上半段
+                        { name: "Qu'il fait bon 水果派", type: "food", note: "晴空塔 2F" },
+                        { name: "CHEESE GARDEN 起司蛋糕", type: "food", note: "晴空塔 2F" },
+                        { name: "STRAWBERRY MANIA 草莓專賣", type: "food", note: "晴空塔 4F" },
+                        { name: "壽司田 成田機場店", type: "food", note: "¥2,000~3,500 (搭機前最後一餐)" },
+                        { name: "とんかつ稻葉和幸", type: "food", note: "本館 4F 炸豬排" },
+                        { name: "江戶前壽司：築地すし好", type: "food", note: "本館 4F" },
+                        { name: "平價迴轉壽司：廻る元祖寿司", type: "food", note: "本館 4F" },
+                        // 購物伴手禮下半段
+                        { name: "東京banana 豹紋巧克力香蕉", type: "souvenir", note: "晴空塔 4F 限定" },
+                        { name: "東京晴空戀巧巧克力", type: "souvenir", note: "成田機場獨賣" },
+                        { name: "日本銀座コロンバン", type: "souvenir", note: "富士山櫻花限定版夾心餅乾" },
+                        { name: "PISTA & TOKYO", type: "souvenir", note: "T2 3F(安檢後) 開心果奶油夾心餅乾" },
+                        { name: "銀座玉屋", type: "souvenir", note: "外皮裹白巧克力的蜂蜜蛋糕" },
+                        { name: "まめや金澤萬久 MAMEYA", type: "souvenir", note: "富士山金箔蜂蜜蛋糕 T2 4F" },
+                        { name: "抹茶千歲", type: "souvenir", note: "第二航站 T2 3F (安檢後)" },
+                        { name: "Fa-So-La TAX FREE AKIHABARA", type: "shop", note: "T2 主樓 4F (安檢前必逛)" },
+                        { name: "MUJI to GO 機場店面", type: "shop", note: "T2 主樓 4F (07:30-21:00)" }
                     ]
                 };
 
@@ -590,30 +717,55 @@
                     { name: "乘換案內", desc: "日本坐地鐵必備", iosLink: "https://world.jorudan.co.jp/mln/zh-tw/", androidLink: "https://world.jorudan.co.jp/mln/zh-tw/", fallbackIcon: "ph-fill ph-train", fallbackBg: "bg-red-100 text-red-500" },
                     { name: "GO Taxi", desc: "日本當地叫車首選", iosLink: "https://apps.apple.com/tw/app/go-taxi-app-for-japan/id1254341709", androidLink: "https://play.google.com/store/apps/details?id=com.dena.automotive.taxibell", fallbackIcon: "ph-bold ph-car-profile", fallbackBg: "bg-gray-800 text-white" },
                     { name: "Tabelog", desc: "查日本餐廳真實評價", iosLink: "https://apps.apple.com/tw/app/tabelog/id302860648", androidLink: "https://play.google.com/store/apps/details?id=com.kakaku.tabelog", fallbackIcon: "ph-fill ph-fork-knife", fallbackBg: "bg-amber-100 text-amber-600" },
-                    { name: "Payke", desc: "條碼掃描與免稅券", iosLink: "https://apps.apple.com/tw/app/payke/id1069628036", androidLink: "https://play.google.com/store/apps/details?id=jp.co.payke.Payke", fallbackIcon: "ph-bold ph-scan", fallbackBg: "bg-pink-100 text-pink-500" }
+                    { name: "Payke", desc: "條碼掃描與免稅", iosLink: "https://apps.apple.com/tw/app/payke/id1069628036", androidLink: "https://play.google.com/store/apps/details?id=jp.co.payke.Payke", fallbackIcon: "ph-bold ph-scan", fallbackBg: "bg-pink-100 text-pink-500" }
                 ]);
 
-                const shoppingItems = ref([
+                // Local Storage 讀取與設定
+                const defaultShopping = [
                     { id: 1, name: "合利他命 EX Plus", qty: 2, note: "OS Drug", checked: false },
                     { id: 2, name: "休足時間", qty: 3, note: "唐吉訶德", checked: true }
-                ]);
+                ];
+                const savedShopping = localStorage.getItem('tokyo_shopping_v1');
+                const shoppingItems = ref(savedShopping ? JSON.parse(savedShopping) : defaultShopping);
+
                 const newItem = ref({ name: "", qty: 1, note: "" });
                 const addShoppingItem = () => { if (!newItem.value.name.trim()) return; shoppingItems.value.unshift({ ...newItem.value, id: Date.now(), checked: false }); newItem.value = { name: "", qty: 1, note: "" }; };
                 const removeShoppingItem = (id) => { shoppingItems.value = shoppingItems.value.filter(item => item.id !== id); };
+
+                watch(shoppingItems, (newVal) => { localStorage.setItem('tokyo_shopping_v1', JSON.stringify(newVal)); }, { deep: true });
 
                 const exchangeRate = 0.213;
                 const jpy = ref('');
                 const jpyTwdValue = computed(() => jpy.value ? Math.round(parseFloat(jpy.value) * exchangeRate) : '0');
 
-                const expenses = ref([
-                    { id: 1, name: "富士山one day tour", amount: 2516, curr: "TWD", payer: "Tass" }
-                ]);
+                // Local Storage 讀取與設定 (記帳本)
+                const defaultExpenses = [
+                    { id: 1, name: "Skyliner (去程)", amount: 4620, curr: "JPY", payer: "Tass" },
+                    { id: 2, name: "富士山一日遊", amount: 2516, curr: "TWD", payer: "Tass" }
+                ];
+                const savedExpenses = localStorage.getItem('tokyo_expenses_v2');
+                const expenses = ref(savedExpenses ? JSON.parse(savedExpenses) : defaultExpenses);
+
                 const expName = ref(''); const expAmount = ref(''); const expCurr = ref('JPY'); const expPayer = ref('Tass');
                 const addExpense = () => { const amt = parseFloat(expAmount.value); if (!expName.value || isNaN(amt) || amt <= 0) return; expenses.value.unshift({ id: Date.now(), name: expName.value, amount: amt, curr: expCurr.value, payer: expPayer.value }); expName.value = ''; expAmount.value = ''; };
                 const removeExpense = (id) => { expenses.value = expenses.value.filter(e => e.id !== id); };
+                
+                watch(expenses, (newVal) => { localStorage.setItem('tokyo_expenses_v2', JSON.stringify(newVal)); }, { deep: true });
+
                 const settlement = computed(() => { if (expenses.value.length === 0) return null; let tPaid = 0, cPaid = 0; expenses.value.forEach(exp => { const amt = exp.curr === 'JPY' ? exp.amount * exchangeRate : exp.amount; if (exp.payer === 'Tass') tPaid += amt; else cPaid += amt; }); const half = (tPaid + cPaid) / 2; if (tPaid > half) return { owePerson: "川", oweTo: "Tass", amount: Math.round(tPaid - half) }; else if (cPaid > half) return { owePerson: "Tass", oweTo: "川", amount: Math.round(cPaid - half) }; return { owePerson: "無", oweTo: "無", amount: 0 }; });
 
-                return { currentTab, tabs, activeDay, currentDayData, activeDetails, toggleDetails, getIconClass, recCategories, activeRecTab, RECOMMENDATIONS, recommendedApps, shoppingItems, newItem, addShoppingItem, removeShoppingItem, exchangeRate, jpy, jpyTwdValue, expenses, expName, expAmount, expCurr, expPayer, addExpense, removeExpense, settlement };
+                // 隨手記事本
+                const savedNotes = localStorage.getItem('tokyo_notes_v1');
+                const personalNotes = ref(savedNotes || "");
+                watch(personalNotes, (val) => localStorage.setItem('tokyo_notes_v1', val));
+
+                return { 
+                    ITINERARY, currentTab, tabs, activeDay, currentDayData, activeDetails, toggleDetails, getIconClass, 
+                    recCategories, activeRecTab, RECOMMENDATIONS, recommendedApps, 
+                    shoppingItems, newItem, addShoppingItem, removeShoppingItem, 
+                    exchangeRate, jpy, jpyTwdValue, expenses, expName, expAmount, expCurr, expPayer, addExpense, removeExpense, settlement, 
+                    scrollArea1, scrollArea2, scrollArea3, scrollArea4, scrollArea5, handleScroll, showScrollTop, scrollToTop, personalNotes, preChecklist
+                };
             }
         }).mount('#app');
     </script>
