@@ -49,9 +49,9 @@
         
         <div class="flex-1 overflow-hidden relative">
             
-            <!-- 回到最上方按鈕 (縮小並加入半透明效果) -->
+            <!-- 回到最上方按鈕 (換成帶橫線的箭頭) -->
             <button v-if="showScrollTop" @click="scrollToTop" class="absolute bottom-24 right-4 w-10 h-10 bg-[#d4af37]/80 backdrop-blur-sm text-[#14221a] rounded-full flex items-center justify-center z-40 shadow-lg active:scale-95 transition-transform hover:bg-[#c25934]/90 hover:text-white border border-white/20">
-                <i class="ph-bold ph-arrow-up text-xl"></i>
+                <i class="ph-bold ph-arrow-line-up text-[22px]"></i>
             </button>
 
             <!-- 1. 行程 (Itinerary) -->
@@ -226,18 +226,18 @@
             <div v-else-if="currentTab === 'strategy'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]" ref="scrollArea3" @scroll="handleScroll">
                 <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">行軍戰略地圖</h2>
 
-                <!-- 出發前確認清單 (可存檔，完美縮小行距並換色) -->
+                <!-- 出發前確認清單 (可存檔，優化行距與字體大小) -->
                 <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6 border border-white/5">
                     <h3 class="font-bold text-[#c25934] text-lg mb-3 flex items-center">
                         <i class="ph-bold ph-check-square-offset text-xl mr-2 text-[#c25934]"></i> 出發前確認
                     </h3>
-                    <div class="space-y-0.5">
-                        <div v-for="item in preChecklist" :key="item.id" @click="item.checked = !item.checked" class="flex items-start cursor-pointer py-1.5 px-2 hover:bg-black/5 rounded-xl transition-colors">
-                            <div class="shrink-0 mr-2.5 mt-0">
-                                <i v-if="item.checked" class="ph-fill ph-check-circle text-2xl text-[#8b9b82]"></i>
-                                <i v-else class="ph ph-circle text-2xl text-gray-300"></i>
+                    <div class="space-y-0">
+                        <div v-for="item in preChecklist" :key="item.id" @click="item.checked = !item.checked" class="flex items-start cursor-pointer py-1.5 px-1 hover:bg-black/5 rounded-lg transition-colors">
+                            <div class="shrink-0 mr-2.5 mt-[2px]">
+                                <i v-if="item.checked" class="ph-fill ph-check-circle text-[22px] text-[#8b9b82]"></i>
+                                <i v-else class="ph ph-circle text-[22px] text-gray-300"></i>
                             </div>
-                            <span :class="['text-[13px] font-bold transition-colors leading-snug py-0.5', item.checked ? 'text-gray-400 line-through' : 'text-[#14221a]']">{{ item.text }}</span>
+                            <span :class="['text-[14px] font-bold transition-colors leading-snug', item.checked ? 'text-gray-400 line-through' : 'text-[#14221a]']">{{ item.text }}</span>
                         </div>
                     </div>
                 </div>
@@ -383,17 +383,17 @@
                 <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
                     <h3 class="font-bold text-[#14221a] mb-4 flex items-center text-sm"><i class="ph-fill ph-currency-circle-dollar text-xl mr-1.5 text-[#8b9b82]"></i> 快速匯率換算</h3>
                     <div class="flex items-center space-x-3">
-                        <div class="flex-1 relative">
-                            <span class="absolute left-3 top-4 text-gray-500 font-bold text-base">¥</span>
-                            <input type="number" v-model="jpy" class="w-full bg-white pl-8 pr-4 py-4 rounded-xl text-base outline-none shadow-inner font-bold" placeholder="日幣" />
+                        <div class="flex-1 relative h-[56px]">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg">¥</span>
+                            <input type="number" v-model="jpy" class="w-full h-full bg-white pl-10 pr-4 rounded-xl text-lg outline-none shadow-inner font-bold" placeholder="日幣" />
                         </div>
-                        <div class="text-gray-400 font-bold"><i class="ph-bold ph-arrow-right text-xl"></i></div>
-                        <div class="flex-1 bg-white px-4 py-4 rounded-xl shadow-inner text-[#c25934] font-bold text-base flex items-center justify-between">
+                        <div class="text-gray-400 font-bold shrink-0"><i class="ph-bold ph-arrow-right text-xl"></i></div>
+                        <div class="flex-1 bg-white h-[56px] px-4 rounded-xl shadow-inner text-[#c25934] font-bold flex items-center justify-between">
                             <span class="text-sm">NT$</span>
-                            <span class="text-lg">{{ jpyTwdValue }}</span>
+                            <span class="text-xl">{{ jpyTwdValue }}</span>
                         </div>
                     </div>
-                    <p class="text-right text-[10px] text-gray-400 mt-2 font-medium">參考匯率: 1 JPY = {{ exchangeRate }} TWD</p>
+                    <p class="text-right text-[10px] text-gray-400 mt-3 font-medium">參考匯率: 1 JPY = {{ exchangeRate }} TWD</p>
                 </div>
 
                 <div class="bg-gradient-to-b from-[#2d4a3a] to-[#1a2b22] p-5 rounded-3xl shadow-xl text-white border border-white/10 mb-6">
@@ -624,11 +624,12 @@
                     { id: 9, text: "換日幣及確認信用卡可境外交易或提款", checked: false },
                     { id: 10, text: "西瓜卡綁定在 iPhone", checked: false }
                 ];
-                const savedPreCheck = localStorage.getItem('tokyo_precheck_v2');
+                // 升級版本號以載入新文字
+                const savedPreCheck = localStorage.getItem('tokyo_precheck_v3');
                 const preChecklist = ref(savedPreCheck ? JSON.parse(savedPreCheck) : defaultPreCheck);
                 
                 watch(preChecklist, (newVal) => { 
-                    localStorage.setItem('tokyo_precheck_v2', JSON.stringify(newVal)); 
+                    localStorage.setItem('tokyo_precheck_v3', JSON.stringify(newVal)); 
                 }, { deep: true });
 
                 // --- 推薦資料 (嚴格依照美食 ➡ 購物伴手禮排序) ---
@@ -738,19 +739,19 @@
                 const jpy = ref('');
                 const jpyTwdValue = computed(() => jpy.value ? Math.round(parseFloat(jpy.value) * exchangeRate) : '0');
 
-                // Local Storage 讀取與設定 (記帳本)
+                // Local Storage 讀取與設定 (記帳本，升級版本以載入新預設值)
                 const defaultExpenses = [
                     { id: 1, name: "Skyliner (去程)", amount: 4620, curr: "JPY", payer: "Tass" },
                     { id: 2, name: "富士山一日遊", amount: 2516, curr: "TWD", payer: "Tass" }
                 ];
-                const savedExpenses = localStorage.getItem('tokyo_expenses_v2');
+                const savedExpenses = localStorage.getItem('tokyo_expenses_v3');
                 const expenses = ref(savedExpenses ? JSON.parse(savedExpenses) : defaultExpenses);
 
                 const expName = ref(''); const expAmount = ref(''); const expCurr = ref('JPY'); const expPayer = ref('Tass');
                 const addExpense = () => { const amt = parseFloat(expAmount.value); if (!expName.value || isNaN(amt) || amt <= 0) return; expenses.value.unshift({ id: Date.now(), name: expName.value, amount: amt, curr: expCurr.value, payer: expPayer.value }); expName.value = ''; expAmount.value = ''; };
                 const removeExpense = (id) => { expenses.value = expenses.value.filter(e => e.id !== id); };
                 
-                watch(expenses, (newVal) => { localStorage.setItem('tokyo_expenses_v2', JSON.stringify(newVal)); }, { deep: true });
+                watch(expenses, (newVal) => { localStorage.setItem('tokyo_expenses_v3', JSON.stringify(newVal)); }, { deep: true });
 
                 const settlement = computed(() => { if (expenses.value.length === 0) return null; let tPaid = 0, cPaid = 0; expenses.value.forEach(exp => { const amt = exp.curr === 'JPY' ? exp.amount * exchangeRate : exp.amount; if (exp.payer === 'Tass') tPaid += amt; else cPaid += amt; }); const half = (tPaid + cPaid) / 2; if (tPaid > half) return { owePerson: "川", oweTo: "Tass", amount: Math.round(tPaid - half) }; else if (cPaid > half) return { owePerson: "Tass", oweTo: "川", amount: Math.round(cPaid - half) }; return { owePerson: "無", oweTo: "無", amount: 0 }; });
 
