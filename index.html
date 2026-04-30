@@ -5,19 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>東京 Tokyo Vibes</title>
     
+    <!-- LINE/FB 專屬預覽縮圖 -->
     <meta property="og:title" content="東京 Tokyo Vibes">
     <meta property="og:description" content="Tass & 川的專屬東京行程規劃 (經典質感版)">
     <meta property="og:image" content="apple-touch-icon.png">
     <meta property="og:type" content="website">
 
+    <!-- iOS 專屬主畫面圖示 -->
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" href="apple-touch-icon.png">
     
+    <!-- 強制 PWA 獨立應用程式模式 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Tokyo Vibes">
     
+    <!-- Vue 3 & Tailwind & Icons -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -45,12 +49,15 @@
         
         <div class="flex-1 overflow-hidden relative">
             
+            <!-- 回到最上方按鈕 -->
             <button v-if="showScrollTop" @click="scrollToTop" class="absolute bottom-24 right-4 w-10 h-10 bg-[#d4af37]/80 backdrop-blur-sm text-[#14221a] rounded-full flex items-center justify-center z-40 shadow-lg active:scale-95 transition-transform hover:bg-[#c25934]/90 hover:text-white border border-white/20">
                 <i class="ph-bold ph-arrow-line-up text-[22px]"></i>
             </button>
 
+            <!-- 1. 行程 (Itinerary) -->
             <div v-if="currentTab === 'itinerary'" class="pb-[100px] h-full overflow-y-auto no-scrollbar relative bg-[#1a2b22]" ref="scrollArea1" @scroll="handleScroll">
                 
+                <!-- 頂部 Hero 區塊 -->
                 <div class="relative animate-fade-in" :key="`header-${activeDay}`">
                     <div :class="['relative rounded-b-[2.5rem] overflow-hidden shadow-2xl min-h-[240px] flex flex-col justify-end border-b border-white/10', currentDayData.color]">
                         
@@ -169,6 +176,7 @@
                 </div>
             </div>
 
+            <!-- 2. 推薦 (Recommendations) -->
             <div v-else-if="currentTab === 'recommendations'" class="pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]" ref="scrollArea2" @scroll="handleScroll">
                 <h2 class="px-5 text-2xl font-serif font-bold text-white mb-5 pb-2">探索清單名鑑</h2>
                 
@@ -208,9 +216,11 @@
                 </div>
             </div>
 
+            <!-- 3. 戰略 (Strategy) -->
             <div v-else-if="currentTab === 'strategy'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]" ref="scrollArea3" @scroll="handleScroll">
                 <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">行軍戰略地圖</h2>
 
+                <!-- 出發前確認清單 -->
                 <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6 border border-white/5">
                     <h3 class="font-bold text-[#c25934] text-lg mb-3 flex items-center">
                         <i class="ph-bold ph-check-square-offset text-xl mr-2 text-[#c25934]"></i> 出發前確認
@@ -226,6 +236,7 @@
                     </div>
                 </div>
 
+                <!-- 預約卡片 -->
                 <div class="bg-gradient-to-br from-[#c25934] to-[#a34727] p-5 rounded-[2rem] shadow-xl mb-6 text-white relative overflow-hidden border border-white/10">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
                     <h3 class="font-bold text-lg mb-4 flex items-center"><i class="ph-fill ph-alarm text-2xl mr-2 text-[#d4af37]"></i> 預約確認狀態</h3>
@@ -251,6 +262,7 @@
                     </ul>
                 </div>
 
+                <!-- 路線卡片 -->
                 <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6">
                     <h3 class="font-bold text-[#14221a] text-lg mb-3 flex items-center">
                         <i class="ph-fill ph-map-trifold text-xl mr-2 text-[#2d4a3a]"></i> 表參道不迷路走法
@@ -268,6 +280,7 @@
                     </div>
                 </div>
 
+                <!-- 旅遊必備 APP (修正連結) -->
                 <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6 border border-white/5">
                     <h3 class="font-bold text-[#14221a] text-lg mb-4 flex items-center">
                         <i class="ph-fill ph-device-mobile text-xl mr-2 text-[#2d4a3a]"></i> 日本旅遊必備 APP
@@ -280,14 +293,39 @@
                             <span class="font-bold text-[#1a2b22] text-[13px] mb-1 leading-tight">{{ app.name }}</span>
                             <span class="text-[9px] text-gray-500 leading-tight mb-3 h-6 flex items-center justify-center">{{ app.desc }}</span>
                             <div class="mt-auto w-full flex gap-1.5 z-10">
-                                <a :href="app.iosLink" target="_blank" class="flex-1 text-[10px] py-2.5 rounded-md font-bold bg-blue-50 text-blue-600 border border-blue-100 tracking-wider flex items-center justify-center hover:bg-blue-100 transition-colors relative z-20">iOS</a>
-                                <a :href="app.androidLink" target="_blank" class="flex-1 text-[10px] py-2.5 rounded-md font-bold bg-green-50 text-green-600 border border-green-100 tracking-wider flex items-center justify-center hover:bg-green-100 transition-colors relative z-20">Android</a>
+                                <a :href="app.iosLink" target="_blank" class="flex-1 text-[10px] py-1.5 rounded-md font-bold bg-blue-50 text-blue-600 border border-blue-100 tracking-wider flex items-center justify-center hover:bg-blue-100 transition-colors relative z-20">iOS</a>
+                                <a :href="app.androidLink" target="_blank" class="flex-1 text-[10px] py-1.5 rounded-md font-bold bg-green-50 text-green-600 border border-green-100 tracking-wider flex items-center justify-center hover:bg-green-100 transition-colors relative z-20">Android</a>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 緊急資訊與實用網站 -->
+                <div class="bg-[#f4f1eb] p-5 rounded-[2rem] shadow-lg mb-6 border border-white/5">
+                    <h3 class="font-bold text-[#14221a] text-lg mb-4 flex items-center">
+                        <i class="ph-fill ph-info text-xl mr-2 text-[#2d4a3a]"></i> 緊急資訊與實用網站
+                    </h3>
+                    <div class="space-y-3 text-sm font-medium text-gray-700">
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-black/5">
+                            <p class="font-bold text-[#1a2b22] mb-1.5"><i class="ph-fill ph-phone-call mr-1 text-[#c25934]"></i> 緊急聯絡</p>
+                            <ul class="space-y-1.5 ml-1 text-[13px] leading-relaxed">
+                                <li class="flex flex-col">台北駐日經濟文化代表處<span class="font-bold text-[#1a2b22]">03-3280-7811</span></li>
+                                <li class="flex flex-col">日本國際觀光局旅遊熱線<span class="font-bold text-[#1a2b22]">050-3816-2787</span></li>
+                                <li class="flex flex-col">JR上野站 失物招領處<span class="font-bold text-[#1a2b22]">03-3841-8069</span></li>
+                                <li class="text-[#c25934] mt-2 pt-2 border-t border-gray-100">不幸迷路、遺失財物或求助警察，請撥打 <span class="font-bold text-[#1a2b22]">03-3501-0110</span></li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-black/5">
+                            <p class="font-bold text-[#1a2b22] mb-2"><i class="ph-fill ph-globe mr-1 text-[#8b9b82]"></i> 訪日好用網站</p>
+                            <a href="https://namehenkan.com/tw" target="_blank" class="text-blue-600 hover:text-blue-800 transition-colors text-[13px] flex items-center bg-blue-50 p-2 rounded-lg relative z-20">
+                                <i class="ph-bold ph-link mr-1.5"></i> 中文轉換日文姓名工具
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- 4. 購物 (Shopping) -->
             <div v-else-if="currentTab === 'shopping'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in flex flex-col no-scrollbar relative bg-[#1a2b22]" ref="scrollArea4" @scroll="handleScroll">
                 <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">戰利品清單</h2>
 
@@ -328,9 +366,11 @@
                 </div>
             </div>
 
+            <!-- 5. 工具 (Tools) -->
             <div v-else-if="currentTab === 'tools'" class="p-5 pt-8 pb-[100px] h-full overflow-y-auto animate-fade-in no-scrollbar relative bg-[#1a2b22]" ref="scrollArea5" @scroll="handleScroll">
                 <h2 class="text-2xl font-serif font-bold text-white mb-6 border-b border-white/20 pb-2">旅行工具箱</h2>
 
+                <!-- 隨手記事本 -->
                 <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
                     <h3 class="font-bold text-[#14221a] mb-3 flex items-center text-sm">
                         <i class="ph-fill ph-note-pencil text-xl mr-1.5 text-[#2d4a3a]"></i> 隨手筆記本
@@ -357,16 +397,17 @@
                     </a>
                 </div>
 
+                <!-- 匯率換算 (UI 修改) -->
                 <div class="bg-[#f4f1eb] p-5 rounded-3xl shadow-lg mb-6 border border-white/5">
                     <h3 class="font-bold text-[#14221a] mb-4 flex items-center text-sm"><i class="ph-fill ph-currency-circle-dollar text-xl mr-1.5 text-[#8b9b82]"></i> 快速匯率換算</h3>
                     <div class="flex items-center space-x-2">
                         <div class="w-[55%] relative h-[64px]">
                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">¥</span>
-                            <input type="number" v-model="jpy" class="w-full h-full bg-white pl-10 pr-3 rounded-xl text-2xl outline-none shadow-inner font-bold text-gray-800 placeholder-gray-400" placeholder="日幣" />
+                            <input type="number" v-model="jpy" class="w-full h-full bg-white pl-10 pr-3 rounded-xl text-xl outline-none shadow-inner font-bold text-gray-800 placeholder-gray-400" placeholder="日幣" />
                         </div>
                         <div class="text-gray-400 font-bold shrink-0 px-1"><i class="ph-bold ph-arrow-right text-xl"></i></div>
                         <div class="w-[45%] bg-white h-[64px] px-3 rounded-xl shadow-inner flex items-center justify-between overflow-hidden">
-                            <span class="text-gray-400 font-bold text-sm shrink-0">$ NTD</span>
+                            <span class="text-[#c25934] font-bold text-sm shrink-0">$ NTD</span>
                             <span class="text-2xl font-bold text-[#c25934] truncate">{{ jpyTwdValue }}</span>
                         </div>
                     </div>
@@ -429,6 +470,7 @@
 
         </div>
 
+        <!-- 底部導覽列 -->
         <div class="absolute bottom-0 left-0 right-0 bg-[#1a2b22]/95 backdrop-blur-xl pb-safe pt-2 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 border-t border-white/5">
             <div class="flex justify-around items-center px-1">
                 <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
@@ -445,6 +487,7 @@
 
     </div>
 
+    <!-- 應用程式邏輯 (Vue 3) -->
     <script>
         const { createApp, ref, computed, watch, onMounted } = Vue;
 
@@ -584,24 +627,24 @@
                     }
                 };
 
-                // 出發前確認 (LocalStorage) - 更新版本號 V4
+                // 出發前確認 (LocalStorage) - 更新版本號 V5
                 const defaultPreCheck = [
                     { id: 1, text: "護照有效期限 6 個月以上", checked: false },
                     { id: 2, text: "行李 double check (含後背包/行李提袋)", checked: false },
                     { id: 3, text: "eSIM 購買", checked: false },
                     { id: 4, text: "Skyliner 去程 (人臉辨識) 購買", checked: false },
-                    { id: 5, text: "Skyliner 回程 (也可日本買)", checked: false },
+                    { id: 5, text: "Skyliner 回程 (也可日本買) 購買", checked: false },
                     { id: 6, text: "72 小時地鐵券 購買", checked: false },
                     { id: 7, text: "出發前 48 小時至華航劃位", checked: false },
                     { id: 8, text: "王橘寶旅住的用品", checked: false },
                     { id: 9, text: "換日幣及確認信用卡可境外交易或提款", checked: false },
                     { id: 10, text: "西瓜卡綁定在 iPhone", checked: false }
                 ];
-                const savedPreCheck = localStorage.getItem('tokyo_precheck_v4');
+                const savedPreCheck = localStorage.getItem('tokyo_precheck_v5');
                 const preChecklist = ref(savedPreCheck ? JSON.parse(savedPreCheck) : defaultPreCheck);
                 
                 watch(preChecklist, (newVal) => { 
-                    localStorage.setItem('tokyo_precheck_v4', JSON.stringify(newVal)); 
+                    localStorage.setItem('tokyo_precheck_v5', JSON.stringify(newVal)); 
                 }, { deep: true });
 
                 const recCategories = ["上野/淺草/新宿", "澀谷/原宿", "銀座/東京/秋葉原/南町田", "成田機場/伴手禮"];
@@ -675,13 +718,14 @@
                     ]
                 };
 
+                // APP 萬能搜尋連結
                 const recommendedApps = ref([
-                    { name: "Kuli Kuli", desc: "菜單拍照秒翻譯神器", iosLink: "https://apps.apple.com/app/id1156828551", androidLink: "https://play.google.com/store/search?q=Kuli+Kuli&c=apps", fallbackIcon: "ph-fill ph-translate", fallbackBg: "bg-orange-100 text-orange-500" },
-                    { name: "tenki.jp", desc: "日本最準氣象預報", iosLink: "https://tenki.jp/", androidLink: "https://tenki.jp/", fallbackIcon: "ph-fill ph-cloud-sun", fallbackBg: "bg-blue-100 text-blue-500" },
-                    { name: "乘換案內", desc: "日本坐地鐵必備", iosLink: "https://world.jorudan.co.jp/mln/zh-tw/", androidLink: "https://world.jorudan.co.jp/mln/zh-tw/", fallbackIcon: "ph-fill ph-train", fallbackBg: "bg-red-100 text-red-500" },
-                    { name: "GO Taxi", desc: "日本當地叫車首選", iosLink: "https://apps.apple.com/app/id1254341709", androidLink: "https://play.google.com/store/apps/details?id=com.dena.automotive.taxibell", fallbackIcon: "ph-bold ph-car-profile", fallbackBg: "bg-gray-800 text-white" },
-                    { name: "Tabelog", desc: "查日本餐廳真實評價", iosLink: "https://apps.apple.com/app/id302860648", androidLink: "https://play.google.com/store/apps/details?id=com.kakaku.tabelog", fallbackIcon: "ph-fill ph-fork-knife", fallbackBg: "bg-amber-100 text-amber-600" },
-                    { name: "Payke", desc: "條碼掃描與免稅", iosLink: "https://apps.apple.com/app/id1069628036", androidLink: "https://play.google.com/store/apps/details?id=jp.co.payke.Payke", fallbackIcon: "ph-bold ph-scan", fallbackBg: "bg-pink-100 text-pink-500" }
+                    { name: "Kuli Kuli", desc: "菜單拍照秒翻譯神器", iosLink: "https://apps.apple.com/tw/search?term=Kuli+Kuli", androidLink: "https://play.google.com/store/search?q=Kuli+Kuli&c=apps", fallbackIcon: "ph-fill ph-translate", fallbackBg: "bg-orange-100 text-orange-500" },
+                    { name: "tenki.jp", desc: "日本最準氣象預報", iosLink: "https://apps.apple.com/tw/search?term=tenki.jp", androidLink: "https://play.google.com/store/search?q=tenki.jp&c=apps", fallbackIcon: "ph-fill ph-cloud-sun", fallbackBg: "bg-blue-100 text-blue-500" },
+                    { name: "乘換案內", desc: "日本坐地鐵必備", iosLink: "https://apps.apple.com/tw/search?term=%E4%B9%98%E6%8F%9B%E6%A1%88%E5%85%A7", androidLink: "https://play.google.com/store/search?q=%E4%B9%98%E6%8F%9B%E6%A1%88%E5%85%A7&c=apps", fallbackIcon: "ph-fill ph-train", fallbackBg: "bg-red-100 text-red-500" },
+                    { name: "GO Taxi", desc: "日本當地叫車首選", iosLink: "https://apps.apple.com/tw/search?term=GO+Taxi", androidLink: "https://play.google.com/store/search?q=GO+Taxi&c=apps", fallbackIcon: "ph-bold ph-car-profile", fallbackBg: "bg-gray-800 text-white" },
+                    { name: "Tabelog", desc: "查日本餐廳真實評價", iosLink: "https://apps.apple.com/tw/search?term=Tabelog", androidLink: "https://play.google.com/store/search?q=Tabelog&c=apps", fallbackIcon: "ph-fill ph-fork-knife", fallbackBg: "bg-amber-100 text-amber-600" },
+                    { name: "Payke", desc: "條碼掃描與免稅", iosLink: "https://apps.apple.com/tw/search?term=Payke", androidLink: "https://play.google.com/store/search?q=Payke&c=apps", fallbackIcon: "ph-bold ph-scan", fallbackBg: "bg-pink-100 text-pink-500" }
                 ]);
 
                 // Local Storage 讀取與設定
@@ -702,19 +746,20 @@
                 const jpy = ref('');
                 const jpyTwdValue = computed(() => jpy.value ? Math.round(parseFloat(jpy.value) * exchangeRate) : '0');
 
-                // Local Storage 讀取與設定 (記帳本 V4 更新預設值)
+                // Local Storage 讀取與設定 (記帳本 V6 更新預設值)
                 const defaultExpenses = [
                     { id: 1, name: "Skyliner (去程)", amount: 4620, curr: "JPY", payer: "Tass" },
-                    { id: 2, name: "富士山一日遊", amount: 2516, curr: "TWD", payer: "Tass" }
+                    { id: 2, name: "富士山一日遊", amount: 2516, curr: "TWD", payer: "Tass" },
+                    { id: 3, name: "飯店費用", amount: 71854, curr: "JPY", payer: "Tass" }
                 ];
-                const savedExpenses = localStorage.getItem('tokyo_expenses_v4');
+                const savedExpenses = localStorage.getItem('tokyo_expenses_v6');
                 const expenses = ref(savedExpenses ? JSON.parse(savedExpenses) : defaultExpenses);
 
                 const expName = ref(''); const expAmount = ref(''); const expCurr = ref('JPY'); const expPayer = ref('Tass');
                 const addExpense = () => { const amt = parseFloat(expAmount.value); if (!expName.value || isNaN(amt) || amt <= 0) return; expenses.value.unshift({ id: Date.now(), name: expName.value, amount: amt, curr: expCurr.value, payer: expPayer.value }); expName.value = ''; expAmount.value = ''; };
                 const removeExpense = (id) => { expenses.value = expenses.value.filter(e => e.id !== id); };
                 
-                watch(expenses, (newVal) => { localStorage.setItem('tokyo_expenses_v4', JSON.stringify(newVal)); }, { deep: true });
+                watch(expenses, (newVal) => { localStorage.setItem('tokyo_expenses_v6', JSON.stringify(newVal)); }, { deep: true });
 
                 const settlement = computed(() => { if (expenses.value.length === 0) return null; let tPaid = 0, cPaid = 0; expenses.value.forEach(exp => { const amt = exp.curr === 'JPY' ? exp.amount * exchangeRate : exp.amount; if (exp.payer === 'Tass') tPaid += amt; else cPaid += amt; }); const half = (tPaid + cPaid) / 2; if (tPaid > half) return { owePerson: "川", oweTo: "Tass", amount: Math.round(tPaid - half) }; else if (cPaid > half) return { owePerson: "Tass", oweTo: "川", amount: Math.round(cPaid - half) }; return { owePerson: "無", oweTo: "無", amount: 0 }; });
 
